@@ -1,0 +1,70 @@
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ExportButton } from './ui/export-button';
+import { ChartSkeleton } from './ui/table-skeleton';
+
+interface ConsumptionChartProps {
+  isLoading?: boolean;
+  data?: { day: string; sessions: number }[];
+}
+
+export default function ConsumptionChart({ isLoading = false, data }: ConsumptionChartProps) {
+  const fallbackData = [
+    { day: 'Mon', sessions: 145 },
+    { day: 'Tue', sessions: 168 },
+    { day: 'Wed', sessions: 132 },
+    { day: 'Thu', sessions: 189 },
+    { day: 'Fri', sessions: 201 },
+    { day: 'Sat', sessions: 98 },
+    { day: 'Sun', sessions: 76 }
+  ];
+  const resolvedData = data ?? fallbackData;
+
+  if (isLoading) {
+    return <ChartSkeleton />;
+  }
+
+  return (
+    <div 
+      className="bg-white"
+      style={{
+        height: '260px',
+        borderRadius: '12px',
+        boxShadow: '0 3px 8px rgba(0,0,0,0.05)',
+        padding: '20px',
+        position: 'relative'
+      }}
+    >
+      <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1A1C1E' }}>
+          Weekly Activity
+        </h2>
+        <ExportButton />
+      </div>
+
+      <ResponsiveContainer width="100%" height="85%">
+        <BarChart data={resolvedData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+          <XAxis 
+            dataKey="day" 
+            tick={{ fill: '#6B7280', fontSize: 13 }}
+            axisLine={{ stroke: '#E5E7EB' }}
+          />
+          <YAxis 
+            tick={{ fill: '#6B7280', fontSize: 13 }}
+            axisLine={{ stroke: '#E5E7EB' }}
+          />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: '#FFFFFF', 
+              border: '1px solid #E5E7EB',
+              borderRadius: '8px',
+              fontSize: '13px'
+            }}
+            cursor={{ fill: '#F3F4F6' }}
+          />
+          <Bar dataKey="sessions" fill="#2563EB" radius={[6, 6, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
