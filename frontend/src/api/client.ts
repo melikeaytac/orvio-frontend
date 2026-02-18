@@ -102,7 +102,7 @@ export interface DeviceAlert {
   timestamp: string;
   alert_type: string;
   message: string;
-  status: string;
+  status_id: number;
 }
 
 export interface DeviceTelemetry {
@@ -161,8 +161,8 @@ export async function getAdminDevices(): Promise<AdminDevice[]> {
   return apiRequest<AdminDevice[]>('/devices');
 }
 
-export async function getDeviceAlerts(deviceId: string, status?: string): Promise<DeviceAlert[]> {
-  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+export async function getDeviceAlerts(deviceId: string, statusId?: number): Promise<DeviceAlert[]> {
+  const query = statusId !== undefined ? `?status_id=${statusId}` : '';
   return apiRequest<DeviceAlert[]>(`/devices/${deviceId}/alerts${query}`);
 }
 
@@ -178,10 +178,10 @@ export async function getDeviceTransactions(deviceId: string, limit = 100): Prom
   return apiRequest<DeviceTransaction[]>(`/devices/${deviceId}/transactions?limit=${limit}`);
 }
 
-export async function updateAlert(alertId: string, status: string, message?: string): Promise<DeviceAlert> {
+export async function updateAlert(alertId: string, statusId: number, message?: string): Promise<DeviceAlert> {
   return apiRequest<DeviceAlert>(`/alerts/${alertId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ status, message }),
+    body: JSON.stringify({ status_id: statusId, message }),
   });
 }
 
