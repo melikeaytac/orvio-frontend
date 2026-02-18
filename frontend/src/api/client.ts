@@ -158,36 +158,37 @@ export interface DeviceAssignment {
 }
 
 export async function getAdminDevices(): Promise<AdminDevice[]> {
-  return apiRequest<AdminDevice[]>('/admin/devices');
+  return apiRequest<AdminDevice[]>('/devices');
 }
 
 export async function getDeviceAlerts(deviceId: string, status?: string): Promise<DeviceAlert[]> {
   const query = status ? `?status=${encodeURIComponent(status)}` : '';
-  return apiRequest<DeviceAlert[]>(`/admin/devices/${deviceId}/alerts${query}`);
+  return apiRequest<DeviceAlert[]>(`/devices/${deviceId}/alerts${query}`);
 }
 
 export async function getDeviceTelemetry(deviceId: string, limit = 20): Promise<DeviceTelemetry[]> {
-  return apiRequest<DeviceTelemetry[]>(`/admin/devices/${deviceId}/telemetry?limit=${limit}`);
+  return apiRequest<DeviceTelemetry[]>(`/devices/${deviceId}/telemetry?limit=${limit}`);
 }
 
 export async function getDeviceInventory(deviceId: string): Promise<DeviceInventoryItem[]> {
-  return apiRequest<DeviceInventoryItem[]>(`/admin/devices/${deviceId}/inventory`);
+  return apiRequest<DeviceInventoryItem[]>(`/devices/${deviceId}/inventory`);
 }
 
 export async function getDeviceTransactions(deviceId: string, limit = 100): Promise<DeviceTransaction[]> {
-  return apiRequest<DeviceTransaction[]>(`/admin/devices/${deviceId}/transactions?limit=${limit}`);
+  return apiRequest<DeviceTransaction[]>(`/devices/${deviceId}/transactions?limit=${limit}`);
 }
 
 export async function updateAlert(alertId: string, status: string, message?: string): Promise<DeviceAlert> {
-  return apiRequest<DeviceAlert>(`/admin/alerts/${alertId}`, {
+  return apiRequest<DeviceAlert>(`/alerts/${alertId}`, {
     method: 'PATCH',
     body: JSON.stringify({ status, message }),
   });
 }
 
 export async function getSysadminAdmins(): Promise<SysadminAdmin[]> {
-  return apiRequest<SysadminAdmin[]>('/sysadmin/admins');
+  return apiRequest<SysadminAdmin[]>('/admins');
 }
+
 
 export async function createSysadminAdmin(payload: {
   first_name: string;
@@ -196,7 +197,7 @@ export async function createSysadminAdmin(payload: {
   password: string;
   role_id?: string;
 }): Promise<SysadminAdmin> {
-  return apiRequest<SysadminAdmin>('/sysadmin/admins', {
+  return apiRequest<SysadminAdmin>('/admins', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -210,32 +211,32 @@ export async function updateSysadminAdmin(adminId: string, payload: {
   active?: boolean;
   password?: string;
 }): Promise<SysadminAdmin> {
-  return apiRequest<SysadminAdmin>(`/sysadmin/admins/${adminId}`, {
+  return apiRequest<SysadminAdmin>(`/admins/${adminId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
   });
 }
 
 export async function getSysadminDevices(): Promise<AdminDevice[]> {
-  return apiRequest<AdminDevice[]>('/sysadmin/devices');
+  return apiRequest<AdminDevice[]>('/devices');
 }
 
 export async function getSysadminAssignments(): Promise<DeviceAssignment[]> {
-  return apiRequest<DeviceAssignment[]>('/sysadmin/assignments');
+  return apiRequest<DeviceAssignment[]>('/assignments');
 }
 
 export async function createSysadminAssignment(payload: {
   device_id: string;
   admin_user_id: string;
 }): Promise<DeviceAssignment> {
-  return apiRequest<DeviceAssignment>('/sysadmin/assignments', {
+  return apiRequest<DeviceAssignment>('/assignments', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
 export async function updateSysadminAssignment(assignmentId: string, payload: { is_active: boolean }): Promise<DeviceAssignment> {
-  return apiRequest<DeviceAssignment>(`/sysadmin/assignments/${assignmentId}`, {
+  return apiRequest<DeviceAssignment>(`/assignments/${assignmentId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
   });

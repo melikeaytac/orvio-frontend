@@ -99,7 +99,7 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
         getSysadminDevices(),
         getSysadminAssignments(),
       ]);
-
+      console.log("Gelen Adminler:", adminsResponse);
       const deviceOptions = devicesResponse.map((device) => ({
         id: device.device_id,
         name: device.name || device.device_id,
@@ -126,8 +126,8 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
         } as Admin;
       });
 
-      setAdmins(nextAdmins.length > 0 ? nextAdmins : fallbackAdmins);
-      setDevices(deviceOptions.length > 0 ? deviceOptions : fallbackDevices);
+      setAdmins(nextAdmins);
+      setDevices(deviceOptions);
       setAssignments(nextAssignments);
     } catch (error) {
       console.error('Failed to load admin data', error);
