@@ -6,6 +6,7 @@ import { EmptyState } from './ui/empty-state';
 import { TableSkeleton } from './ui/table-skeleton';
 import { getAdminDevices, getDeviceAlerts, updateAlert } from '../api/client';
 import { formatDateTime, formatRelativeTime } from '../utils/time';
+import { ALERT_STATUS, ALERT_STATUS_NAMES } from '../utils/constants';
 
 interface AlertsScreenProps {
   onLogout: () => void;
@@ -21,6 +22,7 @@ interface Alert {
   message: string;
   timestamp: string;
   status: 'Open' | 'Acknowledged' | 'Resolved';
+  status_id: number;
   description: string;
   createdAt: string;
 }
@@ -46,6 +48,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       message: 'Door has been open for more than 5 minutes',
       timestamp: '2 mins ago',
       status: 'Open',
+      status_id: ALERT_STATUS.OPEN,
       description: 'The fridge door has been left open for an extended period. This can cause temperature fluctuations and energy waste.',
       createdAt: '2025-12-10 10:45 AM'
     },
@@ -58,6 +61,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       message: 'Temperature exceeded 6°C',
       timestamp: '15 mins ago',
       status: 'Acknowledged',
+      status_id: ALERT_STATUS.ACKNOWLEDGED,
       description: 'Internal temperature has risen above safe threshold. Check cooling system.',
       createdAt: '2025-12-10 10:32 AM'
     },
@@ -70,6 +74,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       message: 'Lost network connection',
       timestamp: '1 hour ago',
       status: 'Open',
+      status_id: ALERT_STATUS.OPEN,
       description: 'The fridge has lost connection to the network. Unable to monitor status remotely.',
       createdAt: '2025-12-10 09:47 AM'
     },
@@ -82,6 +87,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       message: 'Multiple products below threshold',
       timestamp: '2 hours ago',
       status: 'Resolved',
+      status_id: ALERT_STATUS.RESOLVED,
       description: 'Several products have fallen below their minimum stock levels and need restocking.',
       createdAt: '2025-12-10 08:47 AM'
     },
@@ -94,6 +100,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       message: 'Scheduled maintenance due',
       timestamp: '3 hours ago',
       status: 'Open',
+      status_id: ALERT_STATUS.OPEN,
       description: 'This fridge is due for its regular maintenance check.',
       createdAt: '2025-12-10 07:47 AM'
     },
@@ -106,6 +113,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       message: 'Irregular power supply detected',
       timestamp: '5 hours ago',
       status: 'Acknowledged',
+      status_id: ALERT_STATUS.ACKNOWLEDGED,
       description: 'Power supply has been unstable. Check electrical connections.',
       createdAt: '2025-12-10 05:47 AM'
     }
@@ -118,17 +126,16 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
     return 'Low';
   };
 
-  const formatStatus = (status?: string | null): 'Open' | 'Acknowledged' | 'Resolved' => {
-    const normalized = (status || '').toLowerCase();
-    if (normalized.includes('resolved')) return 'Resolved';
-    if (normalized.includes('ack')) return 'Acknowledged';
+  const formatStatus = (statusId?: number | null): 'Open' | 'Acknowledged' | 'Resolved' => {
+    if (statusId === ALERT_STATUS.RESOLVED) return 'Resolved';
+    if (statusId === ALERT_STATUS.ACKNOWLEDGED) return 'Acknowledged';
     return 'Open';
   };
 
   const resolveAlert = async (alertId: string) => {
     try {
-      await updateAlert(alertId, 'RESOLVED');
-      setAlerts((prev) => prev.map((alert) => (alert.id === alertId ? { ...alert, status: 'Resolved' } : alert)));
+      await updateAlert(alertId, ALERT_STATUS.RESOLVED);
+      setAlerts((prev) => prev.map((alert) => (alert.id === alertId ? { ...alert, status: 'Resolved', status_id: ALERT_STATUS.RESOLVED } : alert)));
       setSelectedAlert(null);
     } catch (error) {
       console.error('Failed to resolve alert', error);
@@ -157,7 +164,8 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
           severity: getSeverity(alert.alert_type),
           message: alert.message,
           timestamp: formatRelativeTime(alert.timestamp),
-          status: formatStatus(alert.status),
+          status: formatStatus(alert.status_id),
+          status_id: alert.status_id,
           description: alert.message,
           createdAt: formatDateTime(alert.timestamp),
         }));
