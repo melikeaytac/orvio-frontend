@@ -7,13 +7,15 @@ import FridgeDetail from './components/FridgeDetail';
 import AlertsScreen from './components/AlertsScreen';
 import TransactionsScreen from './components/TransactionsScreen';
 import AdminManagementScreen from './components/AdminManagementScreen';
-import { clearToken } from './api/client';
+import { clearToken, getCurrentUserRole } from './api/client';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [currentPage, setCurrentPage] = useState('Dashboard');
   const [selectedFridgeId, setSelectedFridgeId] = useState<string | null>(null);
+  const currentUserRole = getCurrentUserRole();
+  const isSystemAdmin = currentUserRole === '1' || currentUserRole === 'SYSTEM_ADMIN';
 
   const handleLogin = () => {
     setIsLoggedIn(true);
@@ -32,6 +34,10 @@ export default function App() {
   };
 
   const handleNavigate = (page: string) => {
+    if (page === 'Admin Management' && !isSystemAdmin) {
+      setCurrentPage('Dashboard');
+      return;
+    }
     setCurrentPage(page);
     if (page !== 'FridgeDetail') {
       setSelectedFridgeId(null);
@@ -74,7 +80,7 @@ export default function App() {
           {currentPage === 'Transactions' && (
             <TransactionsScreen onLogout={handleLogout} onNavigate={handleNavigate} />
           )}
-          {currentPage === 'Admin Management' && (
+          {currentPage === 'Admin Management' && isSystemAdmin && (
             <AdminManagementScreen onLogout={handleLogout} onNavigate={handleNavigate} />
           )}
         </>

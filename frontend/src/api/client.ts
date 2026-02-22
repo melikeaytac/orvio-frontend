@@ -145,7 +145,7 @@ export interface SysadminAdmin {
   first_name?: string | null;
   last_name?: string | null;
   email: string;
-  role_id: string;
+  role_id: string | number;
   active?: boolean;
 }
 
@@ -195,7 +195,7 @@ export async function createSysadminAdmin(payload: {
   last_name?: string;
   email: string;
   password: string;
-  role_id?: string;
+  role_id?: string | number;
 }): Promise<SysadminAdmin> {
   return apiRequest<SysadminAdmin>('/admins', {
     method: 'POST',
@@ -207,13 +207,19 @@ export async function updateSysadminAdmin(adminId: string, payload: {
   first_name?: string;
   last_name?: string;
   email?: string;
-  role_id?: string;
+  role_id?: string | number;
   active?: boolean;
   password?: string;
 }): Promise<SysadminAdmin> {
   return apiRequest<SysadminAdmin>(`/admins/${adminId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteSysadminAdmin(adminId: string): Promise<{ message: string; user_id: string }> {
+  return apiRequest<{ message: string; user_id: string }>(`/admins/${adminId}`, {
+    method: 'DELETE',
   });
 }
 
@@ -252,7 +258,18 @@ export function setToken(token: string): void {
   localStorage.setItem('orvio_token', token);
 }
 
+/** Store current user role after login. */
+export function setCurrentUserRole(role: string | number): void {
+  localStorage.setItem('orvio_user_role', String(role));
+}
+
+/** Get current user role from storage. */
+export function getCurrentUserRole(): string | null {
+  return localStorage.getItem('orvio_user_role');
+}
+
 /** Clear token on logout. */
 export function clearToken(): void {
   localStorage.removeItem('orvio_token');
+  localStorage.removeItem('orvio_user_role');
 }

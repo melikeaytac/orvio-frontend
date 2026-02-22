@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { login, setToken } from '../api/client';
+import { login, setToken, setCurrentUserRole } from '../api/client';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -21,6 +21,9 @@ export default function LoginScreen({ onLogin, onNavigateToRegister }: LoginScre
     try {
       const res = await login(email, password);
       if (res.token) setToken(res.token);
+      if (res.user?.role !== undefined && res.user?.role !== null) {
+        setCurrentUserRole(res.user.role);
+      }
       onLogin();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password.');
