@@ -1,5 +1,5 @@
 import { LayoutDashboard, Refrigerator, Bell, Receipt, UserCog, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { getCurrentUserRole } from '../api/client';
 
 interface SidebarProps {
   activePage: string;
@@ -7,12 +7,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
+  const currentUserRole = getCurrentUserRole();
+  const isSystemAdmin = currentUserRole === '1' || currentUserRole === 'SYSTEM_ADMIN';
+
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard },
     { name: 'Fridges', icon: Refrigerator },
     { name: 'Alerts', icon: Bell },
     { name: 'Transactions', icon: Receipt },
-    { name: 'Admin Management', icon: UserCog },
+    ...(isSystemAdmin ? [{ name: 'Admin Management', icon: UserCog }] : []),
     { name: 'Settings', icon: Settings },
   ];
 

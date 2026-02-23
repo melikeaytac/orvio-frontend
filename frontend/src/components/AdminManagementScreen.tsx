@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
-import { Plus, X, Edit2, Trash2, UserCog } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, UserCog, Power } from 'lucide-react';
 import { EmptyState } from './ui/empty-state';
 import { ExportButton } from './ui/export-button';
 import { TableSkeleton } from './ui/table-skeleton';
 import {
   createSysadminAdmin,
   createSysadminAssignment,
+  deleteSysadminAdmin,
   getSysadminAdmins,
   getSysadminAssignments,
   getSysadminDevices,
@@ -28,6 +29,14 @@ interface Admin {
   assignedFridges: string[];
   status: 'Active' | 'Disabled';
 }
+
+const USER_ROLE = {
+  ADMIN: 0,
+  SYSTEM_ADMIN: 1,
+} as const;
+
+const isSystemAdminRole = (roleId: string | number) =>
+  roleId === USER_ROLE.SYSTEM_ADMIN || roleId === '1' || roleId === 'SYSTEM_ADMIN';
 
 export default function AdminManagementScreen({ onLogout, onNavigate }: AdminManagementScreenProps) {
   const [showModal, setShowModal] = useState(false);
@@ -120,7 +129,7 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
           id: admin.user_id,
           name: [admin.first_name, admin.last_name].filter(Boolean).join(' ') || admin.email,
           email: admin.email,
-          role: admin.role_id === 'SYSTEM_ADMIN' ? 'System Admin' : 'Admin',
+          role: isSystemAdminRole(admin.role_id) ? 'System Admin' : 'Admin',
           assignedFridges: assigned,
           status: admin.active === false ? 'Disabled' : 'Active',
         } as Admin;
@@ -144,7 +153,7 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
     refreshData();
   }, []);
 
-  const handleExport = (format: 'csv' | 'png' | 'pdf') => {
+  const handleExport = async (format: 'csv' | 'png' | 'pdf') => {
     const data = admins.map(admin => ({
       ID: admin.id,
       Name: admin.name,
@@ -155,18 +164,12 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
     }));
     
     if (format === 'csv') {
-      const csv = [
-        Object.keys(data[0]).join(','),
-        ...data.map(row => Object.values(row).join(','))
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `admin-list-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
+      await exportData(format, data, { filename: 'admin-list' });
     } else {
-      alert(`Exporting as ${format.toUpperCase()}...`);
+      await exportData(format, 'admin-table', { 
+        filename: 'admin-list',
+        title: 'Admin Management'
+      });
     }
   };
 
@@ -200,11 +203,27 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
   const handleDeleteAdmin = async (adminId: string) => {
     if (confirm('Are you sure you want to delete this admin?')) {
       try {
-        await updateSysadminAdmin(adminId, { active: false });
+        await deleteSysadminAdmin(adminId);
         await refreshData();
       } catch (error) {
-        console.error('Failed to disable admin', error);
+        console.error('Failed to delete admin', error);
       }
+    }
+  };
+
+  const handleToggleAdminStatus = async (admin: Admin) => {
+    const shouldActivate = admin.status === 'Disabled';
+    const actionLabel = shouldActivate ? 'activate' : 'disable';
+
+    if (!confirm(`Are you sure you want to ${actionLabel} this admin?`)) {
+      return;
+    }
+
+    try {
+      await updateSysadminAdmin(admin.id, { active: shouldActivate });
+      await refreshData();
+    } catch (error) {
+      console.error('Failed to update admin status', error);
     }
   };
 
@@ -215,7 +234,7 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
           first_name: formData.name,
           last_name: formData.lastName,
           email: formData.email,
-          role_id: formData.role === 'System Admin' ? 'SYSTEM_ADMIN' : 'ADMIN',
+          role_id: formData.role === 'System Admin' ? USER_ROLE.SYSTEM_ADMIN : USER_ROLE.ADMIN,
           ...(formData.password ? { password: formData.password } : {}),
         });
 
@@ -241,7 +260,7 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
           last_name: formData.lastName,
           email: formData.email,
           password: formData.password,
-          role_id: formData.role === 'System Admin' ? 'SYSTEM_ADMIN' : 'ADMIN',
+          role_id: formData.role === 'System Admin' ? USER_ROLE.SYSTEM_ADMIN : USER_ROLE.ADMIN,
         });
 
         await Promise.all(
@@ -316,6 +335,7 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
 
           {/* Admin List Table */}
           <div
+            id="admin-table"
             className="bg-white"
             style={{
               borderRadius: '12px',
@@ -423,6 +443,18 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
                             title="Edit"
                           >
                             <Edit2 size={16} style={{ color: '#2563EB' }} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleAdminStatus(admin)}
+                            className="transition-colors hover:bg-gray-100 rounded p-2"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer'
+                            }}
+                            title={admin.status === 'Active' ? 'Disable' : 'Activate'}
+                          >
+                            <Power size={16} style={{ color: admin.status === 'Active' ? '#6B7280' : '#10B981' }} />
                           </button>
                           <button
                             onClick={() => handleDeleteAdmin(admin.id)}
