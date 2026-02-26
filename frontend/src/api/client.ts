@@ -103,6 +103,7 @@ export interface DeviceAlert {
   alert_type: string;
   message: string;
   status_id: number;
+  resolution_note?: string | null;
 }
 
 export interface DeviceTelemetry {
@@ -178,10 +179,15 @@ export async function getDeviceTransactions(deviceId: string, limit = 100): Prom
   return apiRequest<DeviceTransaction[]>(`/devices/${deviceId}/transactions?limit=${limit}`);
 }
 
-export async function updateAlert(alertId: string, statusId: number, message?: string): Promise<DeviceAlert> {
+export async function updateAlert(
+  alertId: string,
+  statusId: number,
+  message?: string,
+  resolutionNote?: string
+): Promise<DeviceAlert> {
   return apiRequest<DeviceAlert>(`/alerts/${alertId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ status_id: statusId, message }),
+    body: JSON.stringify({ status_id: statusId, message, resolution_note: resolutionNote }),
   });
 }
 
