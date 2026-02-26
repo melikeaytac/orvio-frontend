@@ -23,6 +23,7 @@ interface Alert {
   timestamp: string;
   status: 'Open' | 'Acknowledged' | 'Resolved';
   status_id: number;
+  resolutionNote?: string;
   description: string;
   createdAt: string;
 }
@@ -37,6 +38,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [fridges, setFridges] = useState<{ id: string; name: string }[]>([]);
   const [isFetching, setIsFetching] = useState(false);
+  const [resolutionNoteInput, setResolutionNoteInput] = useState('');
 
   const fallbackAlerts: Alert[] = [
     {
@@ -88,6 +90,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       timestamp: '2 hours ago',
       status: 'Resolved',
       status_id: ALERT_STATUS.RESOLVED,
+      resolutionNote: 'Restock completed by on-site staff.',
       description: 'Several products have fallen below their minimum stock levels and need restocking.',
       createdAt: '2025-12-10 08:47 AM'
     },
@@ -132,11 +135,17 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
     return 'Open';
   };
 
-  const resolveAlert = async (alertId: string) => {
+  const resolveAlert = async (alertId: string, resolutionNote: string) => {
+    const trimmedNote = resolutionNote.trim();
+    if (!trimmedNote) return;
+
     try {
-      await updateAlert(alertId, ALERT_STATUS.RESOLVED);
-      setAlerts((prev) => prev.map((alert) => (alert.id === alertId ? { ...alert, status: 'Resolved', status_id: ALERT_STATUS.RESOLVED } : alert)));
+      await updateAlert(alertId, ALERT_STATUS.RESOLVED, undefined, trimmedNote);
+      setAlerts((prev) => prev.map((alert) => (alert.id === alertId
+        ? { ...alert, status: 'Resolved', status_id: ALERT_STATUS.RESOLVED, resolutionNote: trimmedNote }
+        : alert)));
       setSelectedAlert(null);
+      setResolutionNoteInput('');
     } catch (error) {
       console.error('Failed to resolve alert', error);
     }
@@ -166,6 +175,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
           timestamp: formatRelativeTime(alert.timestamp),
           status: formatStatus(alert.status_id),
           status_id: alert.status_id,
+          resolutionNote: alert.resolution_note || undefined,
           description: alert.message,
           createdAt: formatDateTime(alert.timestamp),
         }));
@@ -239,7 +249,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
   };
 
   const handleResolveAlert = (alertId: string) => {
-    resolveAlert(alertId);
+    resolveAlert(alertId, resolutionNoteInput);
   };
 
   const handleResetFilters = () => {
@@ -472,7 +482,10 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
                       </td>
                       <td style={{ padding: '16px 8px', textAlign: 'center' }}>
                         <button
-                          onClick={() => setSelectedAlert(alert)}
+                          onClick={() => {
+                            setSelectedAlert(alert);
+                            setResolutionNoteInput(alert.resolutionNote || '');
+                          }}
                           className="transition-colors hover:bg-blue-700"
                           style={{
                             height: '32px',
@@ -603,26 +616,55 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
                   {selectedAlert.status}
                 </span>
               </div>
+
+              {selectedAlert.status === 'Resolved' && (
+                <div>
+                  <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>Resolution Note</p>
+                  <p style={{ fontSize: '14px', color: '#1A1C1E', lineHeight: '1.5' }}>
+                    {selectedAlert.resolutionNote || '-'}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Actions */}
             {selectedAlert.status !== 'Resolved' && (
-              <button
-                onClick={() => handleResolveAlert(selectedAlert.id)}
-                className="w-full transition-colors hover:bg-blue-700"
-                style={{
-                  height: '44px',
-                  backgroundColor: '#2563EB',
-                  color: 'white',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Resolve Alert
-              </button>
+              <div>
+                <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Resolution Note</p>
+                <textarea
+                  value={resolutionNoteInput}
+                  onChange={(e) => setResolutionNoteInput(e.target.value)}
+                  placeholder="Write how this alert was resolved"
+                  style={{
+                    width: '100%',
+                    minHeight: '88px',
+                    borderRadius: '8px',
+                    border: '1px solid #D1D5DB',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#1A1C1E',
+                    marginBottom: '12px',
+                    resize: 'vertical'
+                  }}
+                />
+                <button
+                  onClick={() => handleResolveAlert(selectedAlert.id)}
+                  disabled={!resolutionNoteInput.trim()}
+                  className="w-full transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{
+                    height: '44px',
+                    backgroundColor: '#2563EB',
+                    color: 'white',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: resolutionNoteInput.trim() ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  Resolve Alert
+                </button>
+              </div>
             )}
           </div>
         </>
