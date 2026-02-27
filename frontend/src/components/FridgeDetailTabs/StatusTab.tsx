@@ -9,8 +9,7 @@ interface StatusTabProps {
 }
 
 export default function StatusTab({ fridgeData, temperatureTrend, isLoading = false }: StatusTabProps) {
-  const fallbackTrend = [4.2, 4.1, 4.3, 4.0, 4.2, 4.1, 4.0];
-  const trendValues = temperatureTrend && temperatureTrend.length > 0 ? temperatureTrend : fallbackTrend;
+  const trendValues = temperatureTrend && temperatureTrend.length > 0 ? temperatureTrend : [];
   const tempData = trendValues.map((value) => ({ value }));
 
   if (isLoading) {

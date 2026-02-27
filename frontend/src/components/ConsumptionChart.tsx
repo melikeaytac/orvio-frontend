@@ -8,16 +8,7 @@ interface ConsumptionChartProps {
 }
 
 export default function ConsumptionChart({ isLoading = false, data }: ConsumptionChartProps) {
-  const fallbackData = [
-    { day: 'Mon', sessions: 145 },
-    { day: 'Tue', sessions: 168 },
-    { day: 'Wed', sessions: 132 },
-    { day: 'Thu', sessions: 189 },
-    { day: 'Fri', sessions: 201 },
-    { day: 'Sat', sessions: 98 },
-    { day: 'Sun', sessions: 76 }
-  ];
-  const resolvedData = data ?? fallbackData;
+  const resolvedData = data ?? [];
 
   if (isLoading) {
     return <ChartSkeleton />;

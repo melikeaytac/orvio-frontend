@@ -13,43 +13,7 @@ interface RecentAlertsProps {
 }
 
 export default function RecentAlerts({ isLoading = false, alerts }: RecentAlertsProps) {
-  const fallbackAlerts = [
-    {
-      type: 'Door Open',
-      fridge: 'Fridge A-12',
-      severity: 'High',
-      time: '2 min ago'
-    },
-    {
-      type: 'Temperature Warning',
-      fridge: 'Fridge B-08',
-      severity: 'Medium',
-      time: '15 min ago'
-    },
-    {
-      type: 'Connection Lost',
-      fridge: 'Fridge C-05',
-      severity: 'High',
-      time: '1 hour ago'
-    },
-    {
-      type: 'Low Stock',
-      fridge: 'Fridge A-03',
-      severity: 'Low',
-      time: '2 hours ago'
-    },
-    {
-      type: 'Maintenance Required',
-      fridge: 'Fridge D-11',
-      severity: 'Medium',
-      time: '3 hours ago'
-    }
-  ];
-
-  const resolvedAlerts = alerts ?? fallbackAlerts;
-
-  // For demo: to show empty state, uncomment:
-  // const alerts: any[] = [];
+  const resolvedAlerts = alerts ?? [];
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

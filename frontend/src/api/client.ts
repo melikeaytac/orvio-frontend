@@ -30,6 +30,23 @@ export interface ApiError {
   message?: string;
 }
 
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const res = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
@@ -158,25 +175,36 @@ export interface DeviceAssignment {
   device?: { device_id: string; name?: string | null } | null;
 }
 
-export async function getAdminDevices(): Promise<AdminDevice[]> {
-  return apiRequest<AdminDevice[]>('/devices');
+function buildQuery(params: Record<string, string | number | undefined | null>): string {
+  const parts = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
+  return parts.length > 0 ? `?${parts.join('&')}` : '';
 }
 
-export async function getDeviceAlerts(deviceId: string, statusId?: number): Promise<DeviceAlert[]> {
-  const query = statusId !== undefined ? `?status_id=${statusId}` : '';
-  return apiRequest<DeviceAlert[]>(`/devices/${deviceId}/alerts${query}`);
+export async function getAdminDevices(pagination?: PaginationParams): Promise<PaginatedResponse<AdminDevice>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<AdminDevice>>(`/devices${query}`);
 }
 
-export async function getDeviceTelemetry(deviceId: string, limit = 20): Promise<DeviceTelemetry[]> {
-  return apiRequest<DeviceTelemetry[]>(`/devices/${deviceId}/telemetry?limit=${limit}`);
+export async function getDeviceAlerts(deviceId: string, statusId?: number, pagination?: PaginationParams): Promise<PaginatedResponse<DeviceAlert>> {
+  const query = buildQuery({ status_id: statusId, page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<DeviceAlert>>(`/devices/${deviceId}/alerts${query}`);
 }
 
-export async function getDeviceInventory(deviceId: string): Promise<DeviceInventoryItem[]> {
-  return apiRequest<DeviceInventoryItem[]>(`/devices/${deviceId}/inventory`);
+export async function getDeviceTelemetry(deviceId: string, pagination?: PaginationParams): Promise<PaginatedResponse<DeviceTelemetry>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<DeviceTelemetry>>(`/devices/${deviceId}/telemetry${query}`);
 }
 
-export async function getDeviceTransactions(deviceId: string, limit = 100): Promise<DeviceTransaction[]> {
-  return apiRequest<DeviceTransaction[]>(`/devices/${deviceId}/transactions?limit=${limit}`);
+export async function getDeviceInventory(deviceId: string, pagination?: PaginationParams): Promise<PaginatedResponse<DeviceInventoryItem>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<DeviceInventoryItem>>(`/devices/${deviceId}/inventory${query}`);
+}
+
+export async function getDeviceTransactions(deviceId: string, pagination?: PaginationParams): Promise<PaginatedResponse<DeviceTransaction>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<DeviceTransaction>>(`/devices/${deviceId}/transactions${query}`);
 }
 
 export async function updateAlert(
@@ -191,8 +219,9 @@ export async function updateAlert(
   });
 }
 
-export async function getSysadminAdmins(): Promise<SysadminAdmin[]> {
-  return apiRequest<SysadminAdmin[]>('/admins');
+export async function getSysadminAdmins(pagination?: PaginationParams): Promise<PaginatedResponse<SysadminAdmin>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<SysadminAdmin>>(`/admins${query}`);
 }
 
 
@@ -229,12 +258,14 @@ export async function deleteSysadminAdmin(adminId: string): Promise<{ message: s
   });
 }
 
-export async function getSysadminDevices(): Promise<AdminDevice[]> {
-  return apiRequest<AdminDevice[]>('/devices');
+export async function getSysadminDevices(pagination?: PaginationParams): Promise<PaginatedResponse<AdminDevice>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<AdminDevice>>(`/devices${query}`);
 }
 
-export async function getSysadminAssignments(): Promise<DeviceAssignment[]> {
-  return apiRequest<DeviceAssignment[]>('/assignments');
+export async function getSysadminAssignments(pagination?: PaginationParams): Promise<PaginatedResponse<DeviceAssignment>> {
+  const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
+  return apiRequest<PaginatedResponse<DeviceAssignment>>(`/assignments${query}`);
 }
 
 export async function createSysadminAssignment(payload: {

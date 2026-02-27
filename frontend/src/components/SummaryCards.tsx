@@ -11,13 +11,12 @@ interface SummaryCardsProps {
 }
 
 export default function SummaryCards({ isLoading = false, stats }: SummaryCardsProps) {
-  const fallbackStats = {
-    totalFridges: 48,
-    onlineFridges: 42,
-    activeSessions: 127,
-    totalAlerts: 8,
+  const resolvedStats = stats || {
+    totalFridges: 0,
+    onlineFridges: 0,
+    activeSessions: 0,
+    totalAlerts: 0,
   };
-  const resolvedStats = stats || fallbackStats;
   const cards = [
     {
       title: 'Total Fridges',

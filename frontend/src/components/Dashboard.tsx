@@ -70,16 +70,17 @@ export default function Dashboard({ onLogout, onNavigate }: DashboardProps) {
     const loadDashboard = async () => {
       setIsLoading(true);
       try {
-        const devices = await getAdminDevices();
+        const devicesResponse = await getAdminDevices({ limit: 100 });
+        const devices = devicesResponse.data;
         const deviceNameMap = new Map(devices.map((device) => [device.device_id, getDeviceLabel(device)]));
 
         const alertsResults = await Promise.all(
-          devices.map((device) => getDeviceAlerts(device.device_id).catch(() => [] as DeviceAlert[]))
+          devices.map((device) => getDeviceAlerts(device.device_id, undefined, { limit: 100 }).then(r => r.data).catch(() => [] as DeviceAlert[]))
         );
         const allAlerts = alertsResults.flat();
 
         const transactionsResults = await Promise.all(
-          devices.map((device) => getDeviceTransactions(device.device_id, 50).catch(() => [] as DeviceTransaction[]))
+          devices.map((device) => getDeviceTransactions(device.device_id, { limit: 50 }).then(r => r.data).catch(() => [] as DeviceTransaction[]))
         );
         const allTransactions = transactionsResults.flat();
 

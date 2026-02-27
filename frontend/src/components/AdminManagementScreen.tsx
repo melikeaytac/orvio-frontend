@@ -55,73 +55,31 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
   const [devices, setDevices] = useState<{ id: string; name: string }[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
-  const fallbackAdmins: Admin[] = [
-    {
-      id: 'ADM-001',
-      name: 'John Smith',
-      email: 'john.smith@company.com',
-      role: 'System Admin',
-      assignedFridges: ['FR-00123', 'FR-00124', 'FR-00125', 'FR-00126', 'FR-00127'],
-      status: 'Active'
-    },
-    {
-      id: 'ADM-002',
-      name: 'Sarah Johnson',
-      email: 'sarah.j@company.com',
-      role: 'Admin',
-      assignedFridges: ['FR-00123', 'FR-00124'],
-      status: 'Active'
-    },
-    {
-      id: 'ADM-003',
-      name: 'Michael Brown',
-      email: 'michael.b@company.com',
-      role: 'Admin',
-      assignedFridges: ['FR-00125', 'FR-00126'],
-      status: 'Active'
-    },
-    {
-      id: 'ADM-004',
-      name: 'Emily Davis',
-      email: 'emily.d@company.com',
-      role: 'Admin',
-      assignedFridges: ['FR-00127', 'FR-00128'],
-      status: 'Disabled'
-    }
-  ];
 
-  const fallbackDevices = [
-    { id: 'FR-00123', name: 'Main Entrance Fridge' },
-    { id: 'FR-00124', name: 'Cafeteria Fridge A' },
-    { id: 'FR-00125', name: 'Office Kitchen Fridge' },
-    { id: 'FR-00126', name: 'Lobby Fridge' },
-    { id: 'FR-00127', name: 'Break Room Fridge' },
-    { id: 'FR-00128', name: 'Reception Fridge' }
-  ];
 
   const refreshData = async () => {
     setIsFetching(true);
     setIsLoading(true);
     try {
       const [adminsResponse, devicesResponse, assignmentsResponse] = await Promise.all([
-        getSysadminAdmins(),
-        getSysadminDevices(),
-        getSysadminAssignments(),
+        getSysadminAdmins({ limit: 100 }),
+        getSysadminDevices({ limit: 100 }),
+        getSysadminAssignments({ limit: 100 }),
       ]);
-      console.log("Gelen Adminler:", adminsResponse);
-      const deviceOptions = devicesResponse.map((device) => ({
+      console.log("Gelen Adminler:", adminsResponse.data);
+      const deviceOptions = devicesResponse.data.map((device) => ({
         id: device.device_id,
         name: device.name || device.device_id,
       }));
 
-      const nextAssignments = assignmentsResponse.map((assignment) => ({
+      const nextAssignments = assignmentsResponse.data.map((assignment) => ({
         assignment_id: assignment.assignment_id,
         device_id: assignment.device_id,
         admin_user_id: assignment.admin_user_id,
         is_active: assignment.is_active,
       }));
 
-      const nextAdmins = adminsResponse.map((admin) => {
+      const nextAdmins = adminsResponse.data.map((admin) => {
         const assigned = nextAssignments
           .filter((assignment) => assignment.admin_user_id === admin.user_id && assignment.is_active)
           .map((assignment) => assignment.device_id);
@@ -140,8 +98,8 @@ export default function AdminManagementScreen({ onLogout, onNavigate }: AdminMan
       setAssignments(nextAssignments);
     } catch (error) {
       console.error('Failed to load admin data', error);
-      setAdmins(fallbackAdmins);
-      setDevices(fallbackDevices);
+      setAdmins([]);
+      setDevices([]);
       setAssignments([]);
     } finally {
       setIsFetching(false);
