@@ -40,87 +40,7 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
   const [isFetching, setIsFetching] = useState(false);
   const [resolutionNoteInput, setResolutionNoteInput] = useState('');
 
-  const fallbackAlerts: Alert[] = [
-    {
-      id: 'ALT-001',
-      type: 'Door Open',
-      fridge: 'Main Entrance Fridge',
-      fridgeId: 'FR-00123',
-      severity: 'High',
-      message: 'Door has been open for more than 5 minutes',
-      timestamp: '2 mins ago',
-      status: 'Open',
-      status_id: ALERT_STATUS.OPEN,
-      description: 'The fridge door has been left open for an extended period. This can cause temperature fluctuations and energy waste.',
-      createdAt: '2025-12-10 10:45 AM'
-    },
-    {
-      id: 'ALT-002',
-      type: 'Temperature Warning',
-      fridge: 'Cafeteria Fridge A',
-      fridgeId: 'FR-00124',
-      severity: 'Medium',
-      message: 'Temperature exceeded 6°C',
-      timestamp: '15 mins ago',
-      status: 'Acknowledged',
-      status_id: ALERT_STATUS.ACKNOWLEDGED,
-      description: 'Internal temperature has risen above safe threshold. Check cooling system.',
-      createdAt: '2025-12-10 10:32 AM'
-    },
-    {
-      id: 'ALT-003',
-      type: 'Connection Lost',
-      fridge: 'Office Kitchen Fridge',
-      fridgeId: 'FR-00125',
-      severity: 'High',
-      message: 'Lost network connection',
-      timestamp: '1 hour ago',
-      status: 'Open',
-      status_id: ALERT_STATUS.OPEN,
-      description: 'The fridge has lost connection to the network. Unable to monitor status remotely.',
-      createdAt: '2025-12-10 09:47 AM'
-    },
-    {
-      id: 'ALT-004',
-      type: 'Low Stock',
-      fridge: 'Lobby Fridge',
-      fridgeId: 'FR-00126',
-      severity: 'Low',
-      message: 'Multiple products below threshold',
-      timestamp: '2 hours ago',
-      status: 'Resolved',
-      status_id: ALERT_STATUS.RESOLVED,
-      resolutionNote: 'Restock completed by on-site staff.',
-      description: 'Several products have fallen below their minimum stock levels and need restocking.',
-      createdAt: '2025-12-10 08:47 AM'
-    },
-    {
-      id: 'ALT-005',
-      type: 'Maintenance Required',
-      fridge: 'Break Room Fridge',
-      fridgeId: 'FR-00127',
-      severity: 'Medium',
-      message: 'Scheduled maintenance due',
-      timestamp: '3 hours ago',
-      status: 'Open',
-      status_id: ALERT_STATUS.OPEN,
-      description: 'This fridge is due for its regular maintenance check.',
-      createdAt: '2025-12-10 07:47 AM'
-    },
-    {
-      id: 'ALT-006',
-      type: 'Power Fluctuation',
-      fridge: 'Reception Fridge',
-      fridgeId: 'FR-00128',
-      severity: 'Medium',
-      message: 'Irregular power supply detected',
-      timestamp: '5 hours ago',
-      status: 'Acknowledged',
-      status_id: ALERT_STATUS.ACKNOWLEDGED,
-      description: 'Power supply has been unstable. Check electrical connections.',
-      createdAt: '2025-12-10 05:47 AM'
-    }
-  ];
+
 
   const getSeverity = (alertType?: string | null): 'High' | 'Medium' | 'Low' => {
     const normalized = (alertType || '').toLowerCase();
@@ -157,12 +77,13 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       setIsFetching(true);
       setIsLoading(true);
       try {
-        const devices = await getAdminDevices();
+        const devicesResponse = await getAdminDevices({ limit: 100 });
+        const devices = devicesResponse.data;
         const deviceNameMap = new Map(devices.map((device) => [device.device_id, device.name || device.device_id]));
         const deviceOptions = devices.map((device) => ({ id: device.device_id, name: device.name || device.device_id }));
 
         const results = await Promise.all(
-          devices.map((device) => getDeviceAlerts(device.device_id).catch(() => []))
+          devices.map((device) => getDeviceAlerts(device.device_id, undefined, { limit: 100 }).then(r => r.data).catch(() => []))
         );
         const all = results.flat();
         const mapped = all.map((alert) => ({
@@ -187,12 +108,8 @@ export default function AlertsScreen({ onLogout, onNavigate }: AlertsScreenProps
       } catch (error) {
         console.error('Failed to load alerts', error);
         if (isMounted) {
-          setFridges([
-            { id: 'FR-00123', name: 'Main Entrance Fridge' },
-            { id: 'FR-00124', name: 'Cafeteria Fridge A' },
-            { id: 'FR-00125', name: 'Office Kitchen Fridge' },
-          ]);
-          setAlerts(fallbackAlerts);
+          setFridges([]);
+          setAlerts([]);
         }
       } finally {
         if (isMounted) {

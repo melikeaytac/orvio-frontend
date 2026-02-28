@@ -78,8 +78,9 @@ export default function AlertsTab({ fridgeId, isLoading = false }: AlertsTabProp
     const loadAlerts = async () => {
       setIsFetching(true);
       try {
-        const result = await getDeviceAlerts(fridgeId);
-        const mapped = result.map((alert: any) => ({
+        const response = await getDeviceAlerts(fridgeId, undefined, { limit: 100 });
+        const result = response.data;
+        const mapped = result.map((alert) => ({
           id: alert.alert_id,
           type: alert.alert_type,
           severity: getSeverity(alert.alert_type),
@@ -93,6 +94,7 @@ export default function AlertsTab({ fridgeId, isLoading = false }: AlertsTabProp
         }
       } catch (error) {
         console.error('Failed to load alerts', error);
+        if (isMounted) setAlerts([]);
       } finally {
         if (isMounted) setIsFetching(false);
       }

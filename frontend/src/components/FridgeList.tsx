@@ -21,12 +21,6 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
   const [isLoading, setIsLoading] = useState(true);
   const [fridges, setFridges] = useState<FridgeData[]>([]);
 
-  const fallbackFridges: FridgeData[] = [
-    { id: 'FR-00123', name: 'Main Entrance Fridge', location: 'Building A - Floor 2', status: 'online', door: 'closed', lastActive: '2 mins ago' },
-    { id: 'FR-00124', name: 'Cafeteria Fridge A', location: 'Building B - Ground Floor', status: 'online', door: 'open', lastActive: '5 mins ago' },
-    { id: 'FR-00125', name: 'Office Kitchen Fridge', location: 'Building A - Floor 5', status: 'offline', door: 'closed', lastActive: '2 hours ago' },
-  ];
-
   const normalizeStatus = (status?: string | null): 'online' | 'offline' => {
     if (!status) return 'offline';
     const normalized = status.toLowerCase();
@@ -38,7 +32,8 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
     const loadFridges = async () => {
       setIsLoading(true);
       try {
-        const devices = await getAdminDevices();
+        const response = await getAdminDevices({ limit: 100 });
+        const devices = response.data;
         const mapped = devices.map((device) => ({
           id: device.device_id,
           name: device.name || device.device_id,
@@ -48,11 +43,11 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
           lastActive: formatRelativeTime(device.last_checkin_time || null),
         }));
         if (isMounted) {
-          setFridges(mapped.length > 0 ? mapped : fallbackFridges);
+          setFridges(mapped);
         }
       } catch (error) {
         console.error('Failed to load devices', error);
-        if (isMounted) setFridges(fallbackFridges);
+        if (isMounted) setFridges([]);
       } finally {
         if (isMounted) setIsLoading(false);
       }

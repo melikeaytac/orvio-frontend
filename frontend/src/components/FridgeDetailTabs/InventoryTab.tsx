@@ -25,24 +25,15 @@ export default function InventoryTab({ fridgeId, isLoading = false }: InventoryT
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
-  // Mock inventory data
-  const fallbackProducts: Product[] = [
-    { id: '1', name: 'Coca Cola 330ml', sku: 'BEV-001', quantity: 24, threshold: 10, category: 'Beverages' },
-    { id: '2', name: 'Orange Juice 500ml', sku: 'BEV-002', quantity: 8, threshold: 12, category: 'Beverages' },
-    { id: '3', name: 'Chicken Sandwich', sku: 'FOOD-001', quantity: 15, threshold: 8, category: 'Food' },
-    { id: '4', name: 'Greek Yogurt', sku: 'DAIRY-001', quantity: 5, threshold: 10, category: 'Dairy' },
-    { id: '5', name: 'Mineral Water 500ml', sku: 'BEV-003', quantity: 32, threshold: 15, category: 'Beverages' },
-    { id: '6', name: 'Caesar Salad', sku: 'FOOD-002', quantity: 12, threshold: 8, category: 'Food' },
-    { id: '7', name: 'Energy Drink', sku: 'BEV-004', quantity: 6, threshold: 10, category: 'Beverages' },
-    { id: '8', name: 'Cheese Sticks', sku: 'SNACK-001', quantity: 18, threshold: 10, category: 'Snacks' }
-  ];
+
 
   useEffect(() => {
     let isMounted = true;
     const loadInventory = async () => {
       setIsFetching(true);
       try {
-        const inventory = await getDeviceInventory(fridgeId);
+        const response = await getDeviceInventory(fridgeId, { limit: 100 });
+        const inventory = response.data;
         const mapped = inventory.map((item) => ({
           id: item.product_id,
           name: item.product_name,
@@ -52,11 +43,11 @@ export default function InventoryTab({ fridgeId, isLoading = false }: InventoryT
           category: item.brand_name || 'Uncategorized',
         }));
         if (isMounted) {
-          setProducts(mapped.length > 0 ? mapped : fallbackProducts);
+          setProducts(mapped);
         }
       } catch (error) {
         console.error('Failed to load inventory', error);
-        if (isMounted) setProducts(fallbackProducts);
+        if (isMounted) setProducts([]);
       } finally {
         if (isMounted) setIsFetching(false);
       }

@@ -23,67 +23,14 @@ export default function SessionsTab({ fridgeId, isLoading = false }: SessionsTab
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
-  const fallbackSessions: Session[] = [
-    {
-      id: 'S-001',
-      startTime: '10:45 AM',
-      endTime: '10:47 AM',
-      duration: '2 mins',
-      actions: [
-        { type: 'take', product: 'Coca Cola 330ml', quantity: 2 },
-        { type: 'take', product: 'Chicken Sandwich', quantity: 1 }
-      ]
-    },
-    {
-      id: 'S-002',
-      startTime: '10:32 AM',
-      endTime: '10:34 AM',
-      duration: '2 mins',
-      actions: [
-        { type: 'return', product: 'Orange Juice 500ml', quantity: 2 }
-      ]
-    },
-    {
-      id: 'S-003',
-      startTime: '10:18 AM',
-      endTime: '10:22 AM',
-      duration: '4 mins',
-      actions: [
-        { type: 'take', product: 'Mineral Water 500ml', quantity: 3 },
-        { type: 'take', product: 'Greek Yogurt', quantity: 2 }
-      ]
-    },
-    {
-      id: 'S-004',
-      startTime: '09:55 AM',
-      endTime: '09:56 AM',
-      duration: '1 min',
-      actions: [
-        { type: 'take', product: 'Energy Drink', quantity: 1 }
-      ]
-    },
-    {
-      id: 'S-005',
-      startTime: '09:42 AM',
-      endTime: '09:45 AM',
-      duration: '3 mins',
-      actions: [
-        { type: 'return', product: 'Caesar Salad', quantity: 1 },
-        { type: 'return', product: 'Cheese Sticks', quantity: 3 }
-      ]
-    }
-  ];
-
-  // For demo: to show empty state, uncomment:
-  // const sessions: Session[] = [];
-
   useEffect(() => {
     let isMounted = true;
 
     const loadSessions = async () => {
       setIsFetching(true);
       try {
-        const transactions = await getDeviceTransactions(fridgeId, 50);
+        const response = await getDeviceTransactions(fridgeId, { limit: 50 });
+        const transactions = response.data;
         const mapped = transactions.map((txn) => {
           const items = txn.items || [];
           const actions = items.map((item) => ({
@@ -100,11 +47,11 @@ export default function SessionsTab({ fridgeId, isLoading = false }: SessionsTab
           };
         });
         if (isMounted) {
-          setSessions(mapped.length > 0 ? mapped : fallbackSessions);
+          setSessions(mapped);
         }
       } catch (error) {
         console.error('Failed to load sessions', error);
-        if (isMounted) setSessions(fallbackSessions);
+        if (isMounted) setSessions([]);
       } finally {
         if (isMounted) setIsFetching(false);
       }

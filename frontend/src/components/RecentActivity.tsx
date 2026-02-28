@@ -1,5 +1,6 @@
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Activity } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { EmptyState } from './ui/empty-state';
 
 interface RecentActivityProps {
   isLoading?: boolean;
@@ -12,46 +13,7 @@ interface RecentActivityProps {
 }
 
 export default function RecentActivity({ isLoading = false, activities }: RecentActivityProps) {
-  const fallbackActivities = [
-    {
-      time: '10:45 AM',
-      fridge: 'Fridge A-12',
-      action: 'Take',
-      count: '3 items'
-    },
-    {
-      time: '10:32 AM',
-      fridge: 'Fridge B-08',
-      action: 'Return',
-      count: '2 items'
-    },
-    {
-      time: '10:18 AM',
-      fridge: 'Fridge C-05',
-      action: 'Take',
-      count: '5 items'
-    },
-    {
-      time: '09:55 AM',
-      fridge: 'Fridge A-03',
-      action: 'Take',
-      count: '1 item'
-    },
-    {
-      time: '09:42 AM',
-      fridge: 'Fridge D-11',
-      action: 'Return',
-      count: '4 items'
-    },
-    {
-      time: '09:28 AM',
-      fridge: 'Fridge B-08',
-      action: 'Take',
-      count: '2 items'
-    }
-  ];
-
-  const resolvedActivities = activities ?? fallbackActivities;
+  const resolvedActivities = activities ?? [];
 
   return (
     <div 
@@ -82,6 +44,12 @@ export default function RecentActivity({ isLoading = false, activities }: Recent
               </div>
             ))}
           </div>
+        ) : resolvedActivities.length === 0 ? (
+          <EmptyState
+            title="No activity"
+            description="There is no recent activity to display."
+            icon={<Activity size={48} strokeWidth={1.5} />}
+          />
         ) : (
           <div className="space-y-3">
             {resolvedActivities.map((activity, index) => (

@@ -36,36 +36,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
   const [fridges, setFridges] = useState<{ id: string; name: string }[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
-  const fallbackTransactions: Transaction[] = [
-    { id: 'TXN-001', timestamp: '10:45 AM', createdAt: new Date().toISOString(), fridge: 'Main Entrance Fridge', fridgeId: 'FR-00123', product: 'Coca Cola 330ml', action: 'Take', quantity: 2, sessionId: 'S-001' },
-    { id: 'TXN-002', timestamp: '10:44 AM', createdAt: new Date().toISOString(), fridge: 'Main Entrance Fridge', fridgeId: 'FR-00123', product: 'Chicken Sandwich', action: 'Take', quantity: 1, sessionId: 'S-002' },
-    { id: 'TXN-003', timestamp: '10:32 AM', createdAt: new Date().toISOString(), fridge: 'Cafeteria Fridge A', fridgeId: 'FR-00124', product: 'Orange Juice 500ml', action: 'Return', quantity: 2, sessionId: 'S-003' },
-    { id: 'TXN-004', timestamp: '10:18 AM', createdAt: new Date().toISOString(), fridge: 'Office Kitchen Fridge', fridgeId: 'FR-00125', product: 'Mineral Water 500ml', action: 'Take', quantity: 3, sessionId: 'S-004' },
-    { id: 'TXN-005', timestamp: '10:17 AM', createdAt: new Date().toISOString(), fridge: 'Office Kitchen Fridge', fridgeId: 'FR-00125', product: 'Greek Yogurt', action: 'Take', quantity: 2, sessionId: 'S-005' },
-    { id: 'TXN-006', timestamp: '09:55 AM', createdAt: new Date().toISOString(), fridge: 'Lobby Fridge', fridgeId: 'FR-00126', product: 'Energy Drink', action: 'Take', quantity: 1, sessionId: 'S-006' },
-    { id: 'TXN-007', timestamp: '09:42 AM', createdAt: new Date().toISOString(), fridge: 'Break Room Fridge', fridgeId: 'FR-00127', product: 'Caesar Salad', action: 'Return', quantity: 1, sessionId: 'S-007' },
-    { id: 'TXN-008', timestamp: '09:41 AM', createdAt: new Date().toISOString(), fridge: 'Break Room Fridge', fridgeId: 'FR-00127', product: 'Cheese Sticks', action: 'Return', quantity: 3, sessionId: 'S-008' }
-  ];
 
-  const fallbackTopProducts = [
-    { name: 'Coca Cola', count: 45 },
-    { name: 'Water', count: 38 },
-    { name: 'Sandwich', count: 28 },
-    { name: 'Juice', count: 22 },
-    { name: 'Yogurt', count: 18 }
-  ];
-
-  const fallbackHourlyActivity = [
-    { hour: '6AM', count: 5 },
-    { hour: '7AM', count: 12 },
-    { hour: '8AM', count: 25 },
-    { hour: '9AM', count: 38 },
-    { hour: '10AM', count: 45 },
-    { hour: '11AM', count: 52 },
-    { hour: '12PM', count: 48 },
-    { hour: '1PM', count: 35 },
-    { hour: '2PM', count: 28 }
-  ];
 
   const getActionLabel = (actionType?: string | null): 'Take' | 'Return' => {
     if (actionType && actionType.toLowerCase().includes('return')) return 'Return';
@@ -78,11 +49,12 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
       setIsFetching(true);
       setIsLoading(true);
       try {
-        const devices = await getAdminDevices();
+        const devicesResponse = await getAdminDevices({ limit: 100 });
+        const devices = devicesResponse.data;
         const deviceNameMap = new Map(devices.map((device) => [device.device_id, device.name || device.device_id]));
         const deviceOptions = devices.map((device) => ({ id: device.device_id, name: device.name || device.device_id }));
         const results = await Promise.all(
-          devices.map((device) => getDeviceTransactions(device.device_id, 100).catch(() => []))
+          devices.map((device) => getDeviceTransactions(device.device_id, { limit: 100 }).then(r => r.data).catch(() => []))
         );
         const flattened = results.flat();
 
@@ -116,17 +88,13 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
 
         if (isMounted) {
           setFridges(deviceOptions);
-          setTransactions(mapped.length > 0 ? mapped : fallbackTransactions);
+          setTransactions(mapped);
         }
       } catch (error) {
         console.error('Failed to load transactions', error);
         if (isMounted) {
-          setFridges([
-            { id: 'FR-00123', name: 'Main Entrance Fridge' },
-            { id: 'FR-00124', name: 'Cafeteria Fridge A' },
-            { id: 'FR-00125', name: 'Office Kitchen Fridge' },
-          ]);
-          setTransactions(fallbackTransactions);
+          setFridges([]);
+          setTransactions([]);
         }
       } finally {
         if (isMounted) {
@@ -176,7 +144,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
 
   const analyticsSource = filteredTransactions.length > 0 ? filteredTransactions : transactions;
   const topProductsData = useMemo(() => {
-    if (analyticsSource.length === 0) return fallbackTopProducts;
+    if (analyticsSource.length === 0) return [];
     const counts = new Map<string, number>();
     analyticsSource.forEach((txn) => {
       counts.set(txn.product, (counts.get(txn.product) || 0) + txn.quantity);
@@ -188,7 +156,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
   }, [analyticsSource]);
 
   const hourlyActivityData = useMemo(() => {
-    if (analyticsSource.length === 0) return fallbackHourlyActivity;
+    if (analyticsSource.length === 0) return [];
     const hours = new Map<string, number>();
     analyticsSource.forEach((txn) => {
       const date = new Date(txn.createdAt);

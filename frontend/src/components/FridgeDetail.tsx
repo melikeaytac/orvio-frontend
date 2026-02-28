@@ -25,32 +25,19 @@ interface FridgeHeaderData {
   lastActive: string;
 }
 
-// Mock fridge data
-const mockFridgeData: { [key: string]: any } = {
-  'FR-00123': {
-    name: 'Main Entrance Fridge',
-    location: 'Building A / Floor 2',
-    status: 'online',
-    door: 'closed',
-    temperature: '4°C',
-    lastActive: '2 mins ago'
-  },
-  'FR-00124': {
-    name: 'Cafeteria Fridge A',
-    location: 'Building B / Ground Floor',
-    status: 'online',
-    door: 'open',
-    temperature: '5°C',
-    lastActive: '5 mins ago'
-  }
+const defaultFridgeData: FridgeHeaderData = {
+  name: 'Loading...',
+  location: '',
+  status: 'offline',
+  door: 'closed',
+  temperature: 'N/A',
+  lastActive: 'N/A',
 };
 
 export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeDetailProps) {
   const [activeTab, setActiveTab] = useState('Status');
   const [isLoading, setIsLoading] = useState(true);
-  const [fridgeData, setFridgeData] = useState<FridgeHeaderData>(
-    mockFridgeData[fridgeId] || mockFridgeData['FR-00123']
-  );
+  const [fridgeData, setFridgeData] = useState<FridgeHeaderData>(defaultFridgeData);
   const [temperatureTrend, setTemperatureTrend] = useState<number[]>([]);
 
   const normalizeStatus = (status?: string | null): 'online' | 'offline' => {
@@ -65,11 +52,13 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
     const loadFridge = async () => {
       setIsLoading(true);
       try {
-        const devices = await getAdminDevices();
+        const devicesResponse = await getAdminDevices({ limit: 100 });
+        const devices = devicesResponse.data;
         const device = devices.find((item) => item.device_id === fridgeId);
 
         if (device) {
-          const telemetry = await getDeviceTelemetry(device.device_id, 7).catch(() => []);
+          const telemetryResponse = await getDeviceTelemetry(device.device_id, { limit: 7 }).catch(() => ({ data: [] }));
+          const telemetry = telemetryResponse.data;
           const latestTelemetry = telemetry[0];
           const temperatureValue = latestTelemetry?.internal_temperature ?? device.default_temperature;
           const doorStatus = latestTelemetry?.door_sensor_status ?? device.door_status;
@@ -98,7 +87,7 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
       } catch (error) {
         console.error('Failed to load fridge details', error);
         if (isMounted) {
-          setFridgeData(mockFridgeData[fridgeId] || mockFridgeData['FR-00123']);
+          setFridgeData(defaultFridgeData);
         }
       } finally {
         if (isMounted) setIsLoading(false);
