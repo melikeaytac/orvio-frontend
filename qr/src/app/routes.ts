@@ -2,6 +2,8 @@ import { createBrowserRouter } from "react-router";
 import { WelcomePage } from "@/app/pages/WelcomePage";
 import { ShoppingCartPage } from "@/app/pages/ShoppingCartPage";
 import { CompletedPage } from "@/app/pages/CompletedPage";
+import { PurchaseDetailsPage } from "@/app/pages/PurchaseDetailsPage";
+import { FeedbackPage } from "@/app/pages/FeedbackPage";
 
 export const router = createBrowserRouter([
   {
@@ -15,5 +17,13 @@ export const router = createBrowserRouter([
   {
     path: "/completed",
     Component: CompletedPage,
+  },
+  {
+    path: "/purchase-details",
+    Component: PurchaseDetailsPage,
+  },
+  {
+    path: "/feedback",
+    Component: FeedbackPage,
   },
 ]);
