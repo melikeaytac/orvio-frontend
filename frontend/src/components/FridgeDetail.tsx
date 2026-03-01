@@ -65,7 +65,7 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
           const lastActive = device.last_checkin_time || latestTelemetry?.timestamp || null;
 
           const nextFridgeData: FridgeHeaderData = {
-            name: device.name || device.device_id,
+            name: device.name || 'Unnamed fridge',
             location: device.location_description || 'Unknown location',
             status: normalizeStatus(device.status),
             door: doorStatus ? 'open' : 'closed',
@@ -156,9 +156,6 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
               <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#1A1C1E', marginBottom: '6px' }}>
                 {fridgeData.name}
               </h1>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: '#6B7280', marginBottom: '6px' }}>
-                {fridgeId}
-              </p>
               <p style={{ fontSize: '14px', fontWeight: 500, color: '#6B7280' }}>
                 {fridgeData.location}
               </p>

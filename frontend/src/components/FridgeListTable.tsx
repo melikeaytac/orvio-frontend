@@ -33,7 +33,6 @@ export default function FridgeListTable({
   // Filter fridges
   const filteredFridges = fridges.filter((fridge) => {
     const matchesSearch = 
-      fridge.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       fridge.name.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = 
@@ -132,9 +131,6 @@ export default function FridgeListTable({
           <thead>
             <tr style={{ borderBottom: '2px solid #E5E7EB' }}>
               <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
-                Fridge ID
-              </th>
-              <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
                 Name
               </th>
               <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
@@ -170,9 +166,6 @@ export default function FridgeListTable({
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <td style={{ padding: '16px 8px', fontSize: '14px', fontWeight: 500, color: '#2563EB' }}>
-                  {fridge.id}
-                </td>
                 <td style={{ padding: '16px 8px', fontSize: '14px', color: '#1A1C1E' }}>
                   {fridge.name}
                 </td>
@@ -237,7 +230,7 @@ export default function FridgeListTable({
                         color: '#6B7280',
                         cursor: 'pointer'
                       }}
-                      onClick={() => alert(`More options for ${fridge.id}`)}
+                      onClick={() => alert(`More options for ${fridge.name}`)}
                     >
                       <MoreVertical size={16} />
                     </button>
