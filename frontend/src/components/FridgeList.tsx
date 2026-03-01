@@ -77,18 +77,12 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
     }));
 
     if (format === 'csv') {
-      const csv = [
-        'Fridge ID,Name,Location,Status,Door,Last Active',
-        ...fridges.map(f => `${f.id},${f.name},${f.location},${f.status},${f.door},${f.lastActive}`)
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fridge-list-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
+      await exportData(format, data, { filename: 'fridge-list' });
     } else {
-      alert(`Exporting as ${format.toUpperCase()}...`);
+      await exportData(format, 'fridge-list-table', {
+        filename: 'fridge-list',
+        title: 'Fridge List'
+      });
     }
   };
 
