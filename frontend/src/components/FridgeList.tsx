@@ -8,6 +8,7 @@ import { TableSkeleton } from './ui/table-skeleton';
 import { getAdminDevices } from '../api/client';
 import { formatRelativeTime } from '../utils/time';
 import { exportData } from '../utils/export';
+import fridgeIllustration from '../assets/fridge-illustration.svg';
 
 interface FridgeListProps {
   onLogout: () => void;
@@ -37,7 +38,7 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
         const devices = response.data;
         const mapped = devices.map((device) => ({
           id: device.device_id,
-          name: device.name || device.device_id,
+          name: device.name || 'Unnamed fridge',
           location: device.location_description || 'Unknown location',
           status: normalizeStatus(device.status),
           door: device.door_status ? 'open' : 'closed',
@@ -68,7 +69,6 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
 
   const handleExport = async (format: 'csv' | 'png' | 'pdf') => {
     const data = fridges.map(f => ({
-      'Fridge ID': f.id,
       Name: f.name,
       Location: f.location,
       Status: f.status,
@@ -116,7 +116,7 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
                 />
                 <input
                   type="text"
-                  placeholder="Search fridge by ID or name..."
+                  placeholder="Search fridge by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="outline-none focus:ring-2 focus:ring-blue-500 transition-all"
@@ -202,21 +202,44 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
             </div>
           </div>
 
-          {/* Fridge List Table */}
-          {isLoading ? (
-            <TableSkeleton />
-          ) : (
-            <div id="fridge-list-table">
-              <FridgeListTable 
-                searchQuery={searchQuery}
-                statusFilter={statusFilter}
-                locationFilter={locationFilter}
-                onClearFilters={handleClearFilters}
-                onViewFridge={onViewFridge}
-                fridges={fridges}
+          <div className="flex items-start gap-4">
+            {/* Fridge List Table */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <div id="fridge-list-table">
+                  <FridgeListTable 
+                    searchQuery={searchQuery}
+                    statusFilter={statusFilter}
+                    locationFilter={locationFilter}
+                    onClearFilters={handleClearFilters}
+                    onViewFridge={onViewFridge}
+                    fridges={fridges}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div
+              aria-hidden="true"
+              className="hidden lg:flex pointer-events-none items-center justify-center"
+              style={{
+                width: '220px',
+                minWidth: '220px',
+                position: 'sticky',
+                top: '180px',
+                alignSelf: 'flex-start',
+                marginTop: '8px',
+              }}
+            >
+              <img
+                src={fridgeIllustration}
+                alt=""
+                style={{ width: '220px', height: '293px', display: 'block' }}
               />
             </div>
-          )}
+          </div>
 
           {/* Footer */}
           <div className="text-center" style={{ marginTop: '32px' }}>
