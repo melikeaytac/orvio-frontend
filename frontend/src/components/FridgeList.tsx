@@ -7,6 +7,7 @@ import { ExportButton } from './ui/export-button';
 import { TableSkeleton } from './ui/table-skeleton';
 import { getAdminDevices } from '../api/client';
 import { formatRelativeTime } from '../utils/time';
+import { exportData } from '../utils/export';
 
 interface FridgeListProps {
   onLogout: () => void;
@@ -65,20 +66,23 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
     setLocationFilter('');
   };
 
-  const handleExport = (format: 'csv' | 'png' | 'pdf') => {
+  const handleExport = async (format: 'csv' | 'png' | 'pdf') => {
+    const data = fridges.map(f => ({
+      'Fridge ID': f.id,
+      Name: f.name,
+      Location: f.location,
+      Status: f.status,
+      Door: f.door,
+      'Last Active': f.lastActive
+    }));
+
     if (format === 'csv') {
-      const csv = [
-        'Fridge ID,Name,Location,Status,Door,Last Active',
-        ...fridges.map(f => `${f.id},${f.name},${f.location},${f.status},${f.door},${f.lastActive}`)
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fridge-list-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
+      await exportData(format, data, { filename: 'fridge-list' });
     } else {
-      alert(`Exporting as ${format.toUpperCase()}...`);
+      await exportData(format, 'fridge-list-table', {
+        filename: 'fridge-list',
+        title: 'Fridge List'
+      });
     }
   };
 
@@ -202,14 +206,16 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
           {isLoading ? (
             <TableSkeleton />
           ) : (
-            <FridgeListTable 
-              searchQuery={searchQuery}
-              statusFilter={statusFilter}
-              locationFilter={locationFilter}
-              onClearFilters={handleClearFilters}
-              onViewFridge={onViewFridge}
-              fridges={fridges}
-            />
+            <div id="fridge-list-table">
+              <FridgeListTable 
+                searchQuery={searchQuery}
+                statusFilter={statusFilter}
+                locationFilter={locationFilter}
+                onClearFilters={handleClearFilters}
+                onViewFridge={onViewFridge}
+                fridges={fridges}
+              />
+            </div>
           )}
 
           {/* Footer */}

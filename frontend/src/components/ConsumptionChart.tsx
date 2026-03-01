@@ -1,6 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExportButton } from './ui/export-button';
 import { ChartSkeleton } from './ui/table-skeleton';
+import { exportData } from '../utils/export';
 
 interface ConsumptionChartProps {
   isLoading?: boolean;
@@ -10,12 +11,29 @@ interface ConsumptionChartProps {
 export default function ConsumptionChart({ isLoading = false, data }: ConsumptionChartProps) {
   const resolvedData = data ?? [];
 
+  const handleExport = async (format: 'csv' | 'png' | 'pdf') => {
+    const data = resolvedData.map(item => ({
+      Day: item.day,
+      Sessions: item.sessions
+    }));
+    
+    if (format === 'csv') {
+      await exportData(format, data, { filename: 'weekly-activity' });
+    } else {
+      await exportData(format, 'weekly-activity-chart', { 
+        filename: 'weekly-activity',
+        title: 'Weekly Activity'
+      });
+    }
+  };
+
   if (isLoading) {
     return <ChartSkeleton />;
   }
 
   return (
     <div 
+      id="weekly-activity-chart"
       className="bg-white"
       style={{
         height: '260px',
@@ -29,7 +47,7 @@ export default function ConsumptionChart({ isLoading = false, data }: Consumptio
         <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1A1C1E' }}>
           Weekly Activity
         </h2>
-        <ExportButton />
+        <ExportButton onExport={handleExport} />
       </div>
 
       <ResponsiveContainer width="100%" height="85%">
