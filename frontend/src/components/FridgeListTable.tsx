@@ -149,7 +149,7 @@ export default function FridgeListTable({
               <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
                 Last Active
               </th>
-              <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
+              <th data-export-hide style={{ textAlign: 'center', padding: '12px 8px', fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
                 Actions
               </th>
             </tr>
@@ -213,7 +213,7 @@ export default function FridgeListTable({
                 <td style={{ padding: '16px 8px', fontSize: '14px', color: '#9CA3AF' }}>
                   {fridge.lastActive}
                 </td>
-                <td style={{ padding: '16px 8px' }}>
+                <td data-export-hide style={{ padding: '16px 8px' }}>
                   <div className="flex items-center justify-center gap-2">
                     <button
                       className="transition-colors hover:underline"
@@ -250,7 +250,7 @@ export default function FridgeListTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-6" style={{ marginTop: '20px' }}>
+      <div data-export-hide className="flex items-center justify-center gap-6" style={{ marginTop: '20px' }}>
         {/* Rows per page */}
         <div className="flex items-center gap-2">
           <span style={{ fontSize: '14px', color: '#6B7280' }}>Rows per page:</span>

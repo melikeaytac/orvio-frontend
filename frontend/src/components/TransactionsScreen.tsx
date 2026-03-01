@@ -8,6 +8,7 @@ import { ExportButton } from './ui/export-button';
 import { TableSkeleton, ChartSkeleton } from './ui/table-skeleton';
 import { getAdminDevices, getDeviceTransactions } from '../api/client';
 import { formatTime } from '../utils/time';
+import { exportData } from '../utils/export';
 
 interface TransactionsScreenProps {
   onLogout: () => void;
@@ -168,6 +169,38 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
       .sort((a, b) => a.hour.localeCompare(b.hour))
       .slice(0, 9);
   }, [analyticsSource]);
+
+  const handleTopProductsExport = async (format: 'csv' | 'png' | 'pdf') => {
+    const data = topProductsData.map(item => ({
+      Product: item.name,
+      Count: item.count
+    }));
+    
+    if (format === 'csv') {
+      await exportData(format, data, { filename: 'top-products' });
+    } else {
+      await exportData(format, 'top-products-chart', { 
+        filename: 'top-products',
+        title: 'Top Products'
+      });
+    }
+  };
+
+  const handleHourlyActivityExport = async (format: 'csv' | 'png' | 'pdf') => {
+    const data = hourlyActivityData.map(item => ({
+      Hour: item.hour,
+      Count: item.count
+    }));
+    
+    if (format === 'csv') {
+      await exportData(format, data, { filename: 'hourly-activity' });
+    } else {
+      await exportData(format, 'hourly-activity-chart', { 
+        filename: 'hourly-activity',
+        title: 'Hourly Activity'
+      });
+    }
+  };
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#F5F7FA' }}>
@@ -446,6 +479,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
               <ChartSkeleton />
             ) : (
               <div
+                id="top-products-chart"
                 className="bg-white"
                 style={{
                   height: '260px',
@@ -458,7 +492,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
                   <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1A1C1E' }}>
                     Top Products
                   </h3>
-                  <ExportButton />
+                  <ExportButton onExport={handleTopProductsExport} />
                 </div>
                 <ResponsiveContainer width="100%" height="85%">
                   <BarChart data={topProductsData} layout="vertical">
@@ -484,6 +518,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
               <ChartSkeleton />
             ) : (
               <div
+                id="hourly-activity-chart"
                 className="bg-white"
                 style={{
                   height: '260px',
@@ -496,7 +531,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
                   <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1A1C1E' }}>
                     Hourly Activity
                   </h3>
-                  <ExportButton />
+                  <ExportButton onExport={handleHourlyActivityExport} />
                 </div>
                 <ResponsiveContainer width="100%" height="85%">
                   <LineChart data={hourlyActivityData}>
