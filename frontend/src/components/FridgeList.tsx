@@ -8,7 +8,6 @@ import { TableSkeleton } from './ui/table-skeleton';
 import { getAdminDevices } from '../api/client';
 import { formatRelativeTime } from '../utils/time';
 import { exportData } from '../utils/export';
-import fridgeIllustration from '../assets/fridge-illustration.svg';
 
 interface FridgeListProps {
   onLogout: () => void;
@@ -202,43 +201,19 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
             </div>
           </div>
 
-          <div className="flex items-start gap-4">
-            {/* Fridge List Table */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {isLoading ? (
-                <TableSkeleton />
-              ) : (
-                <div id="fridge-list-table">
-                  <FridgeListTable 
-                    searchQuery={searchQuery}
-                    statusFilter={statusFilter}
-                    locationFilter={locationFilter}
-                    onClearFilters={handleClearFilters}
-                    onViewFridge={onViewFridge}
-                    fridges={fridges}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div
-              aria-hidden="true"
-              className="hidden lg:flex pointer-events-none items-center justify-center"
-              style={{
-                width: '220px',
-                minWidth: '220px',
-                position: 'sticky',
-                top: '180px',
-                alignSelf: 'flex-start',
-                marginTop: '8px',
-              }}
-            >
-              <img
-                src={fridgeIllustration}
-                alt=""
-                style={{ width: '220px', height: '293px', display: 'block' }}
+          <div id="fridge-list-table">
+            {isLoading ? (
+              <TableSkeleton />
+            ) : (
+              <FridgeListTable 
+                searchQuery={searchQuery}
+                statusFilter={statusFilter}
+                locationFilter={locationFilter}
+                onClearFilters={handleClearFilters}
+                onViewFridge={onViewFridge}
+                fridges={fridges}
               />
-            </div>
+            )}
           </div>
 
           {/* Footer */}

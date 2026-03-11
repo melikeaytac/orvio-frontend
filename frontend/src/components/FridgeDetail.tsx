@@ -7,8 +7,12 @@ import InventoryTab from './FridgeDetailTabs/InventoryTab';
 import SessionsTab from './FridgeDetailTabs/SessionsTab';
 import AlertsTab from './FridgeDetailTabs/AlertsTab';
 import { Skeleton } from './ui/skeleton';
-import { getAdminDevices, getDeviceTelemetry } from '../api/client';
+import { getAdminDevices, getDeviceTelemetry, getDeviceAlerts } from '../api/client';
 import { formatRelativeTime } from '../utils/time';
+import { ALERT_STATUS } from '../utils/constants';
+import fridgeIllustration from '../assets/fridge-illustration.svg';
+import fridgeWhiteLights from '../assets/fridge-white-lights.svg';
+import fridgeRedLights from '../assets/fridge-red-lights.svg';
 
 interface FridgeDetailProps {
   onLogout: () => void;
@@ -39,6 +43,7 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
   const [isLoading, setIsLoading] = useState(true);
   const [fridgeData, setFridgeData] = useState<FridgeHeaderData>(defaultFridgeData);
   const [temperatureTrend, setTemperatureTrend] = useState<number[]>([]);
+  const [hasOpenAlert, setHasOpenAlert] = useState(false);
 
   const normalizeStatus = (status?: string | null): 'online' | 'offline' => {
     if (!status) return 'offline';
@@ -59,6 +64,8 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
         if (device) {
           const telemetryResponse = await getDeviceTelemetry(device.device_id, { limit: 7 }).catch(() => ({ data: [] }));
           const telemetry = telemetryResponse.data;
+          const alertsResponse = await getDeviceAlerts(device.device_id, ALERT_STATUS.OPEN, { limit: 1 }).catch(() => ({ data: [] }));
+          const openAlerts = alertsResponse.data;
           const latestTelemetry = telemetry[0];
           const temperatureValue = latestTelemetry?.internal_temperature ?? device.default_temperature;
           const doorStatus = latestTelemetry?.door_sensor_status ?? device.door_status;
@@ -82,12 +89,14 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
           if (isMounted) {
             setFridgeData(nextFridgeData);
             setTemperatureTrend(trendValues);
+            setHasOpenAlert(openAlerts.length > 0);
           }
         }
       } catch (error) {
         console.error('Failed to load fridge details', error);
         if (isMounted) {
           setFridgeData(defaultFridgeData);
+          setHasOpenAlert(false);
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -109,6 +118,12 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
   const getDoorColor = (door: string) => {
     return door === 'open' ? '#F59E0B' : '#10B981';
   };
+
+  const fridgeImageSrc = hasOpenAlert
+    ? fridgeRedLights
+    : fridgeData.status === 'online'
+      ? fridgeWhiteLights
+      : fridgeIllustration;
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#F5F7FA' }}>
@@ -139,141 +154,148 @@ export default function FridgeDetail({ onLogout, onNavigate, fridgeId }: FridgeD
             Back to Fridges
           </button>
 
-          {/* Header Section - Fridge Info */}
-          <div
-            className="bg-white flex items-center justify-between"
-            style={{
-              width: '100%',
-              height: '120px',
-              borderRadius: '12px',
-              boxShadow: '0 3px 8px rgba(0,0,0,0.05)',
-              padding: '24px',
-              marginBottom: '24px'
-            }}
-          >
-            {/* Left Block */}
-            <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#1A1C1E', marginBottom: '6px' }}>
-                {fridgeData.name}
-              </h1>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: '#6B7280' }}>
-                {fridgeData.location}
-              </p>
-            </div>
+          <div>
+            {/* Header Section - Fridge Info */}
+            <div
+              className="bg-white flex items-center justify-between"
+              style={{
+                width: '100%',
+                borderRadius: '12px',
+                boxShadow: '0 3px 8px rgba(0,0,0,0.05)',
+                padding: '20px 24px',
+                marginBottom: '24px'
+              }}
+            >
+              <div style={{ minWidth: 0, paddingRight: '16px' }}>
+                <h1 style={{ fontSize: '28px', fontWeight: 600, color: '#1A1C1E', marginBottom: '6px' }}>
+                  {fridgeData.name}
+                </h1>
+                <p style={{ fontSize: '14px', fontWeight: 500, color: '#6B7280' }}>
+                  {fridgeData.location}
+                </p>
 
-            {/* Right Block - Status Chips */}
-            <div className="flex items-center gap-2">
-              {/* Status */}
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  height: '28px',
-                  padding: '0 12px',
-                  borderRadius: '14px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: getStatusColor(fridgeData.status),
-                  backgroundColor: `${getStatusColor(fridgeData.status)}15`
-                }}
-              >
-                <div
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: getStatusColor(fridgeData.status)
-                  }}
-                />
-                {fridgeData.status === 'online' ? 'Online' : 'Offline'}
-              </span>
-
-              {/* Door */}
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  height: '28px',
-                  padding: '0 12px',
-                  borderRadius: '14px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: getDoorColor(fridgeData.door),
-                  backgroundColor: `${getDoorColor(fridgeData.door)}15`,
-                  textTransform: 'capitalize'
-                }}
-              >
-                Door: {fridgeData.door}
-              </span>
-
-              {/* Temperature */}
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  height: '28px',
-                  padding: '0 12px',
-                  borderRadius: '14px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#2563EB',
-                  backgroundColor: '#EFF6FF'
-                }}
-              >
-                {fridgeData.temperature}
-              </span>
-
-              {/* Last Active */}
-              <span style={{ fontSize: '13px', color: '#6B7280', marginLeft: '8px' }}>
-                Last active: {fridgeData.lastActive}
-              </span>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div style={{ borderBottom: '1px solid #E5E7EB', marginBottom: '24px' }}>
-            <div className="flex gap-8">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className="relative transition-colors"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    height: '48px',
-                    fontSize: '14px',
-                    fontWeight: activeTab === tab ? 600 : 500,
-                    color: activeTab === tab ? '#2563EB' : '#6B7280',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {tab}
-                  {activeTab === tab && (
+                <div className="flex items-center gap-2" style={{ marginTop: '14px', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      height: '28px',
+                      padding: '0 12px',
+                      borderRadius: '14px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: getStatusColor(fridgeData.status),
+                      backgroundColor: `${getStatusColor(fridgeData.status)}15`
+                    }}
+                  >
                     <div
                       style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: '2px',
-                        backgroundColor: '#2563EB'
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: getStatusColor(fridgeData.status)
                       }}
                     />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+                    {fridgeData.status === 'online' ? 'Online' : 'Offline'}
+                  </span>
 
-          {/* Tab Content */}
-          {activeTab === 'Status' && (
-            <StatusTab fridgeData={fridgeData} temperatureTrend={temperatureTrend} isLoading={isLoading} />
-          )}
-          {activeTab === 'Inventory' && <InventoryTab fridgeId={fridgeId} isLoading={isLoading} />}
-          {activeTab === 'Sessions' && <SessionsTab fridgeId={fridgeId} isLoading={isLoading} />}
-          {activeTab === 'Alerts' && <AlertsTab fridgeId={fridgeId} isLoading={isLoading} />}
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      height: '28px',
+                      padding: '0 12px',
+                      borderRadius: '14px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: getDoorColor(fridgeData.door),
+                      backgroundColor: `${getDoorColor(fridgeData.door)}15`,
+                      textTransform: 'capitalize'
+                    }}
+                  >
+                    Door: {fridgeData.door}
+                  </span>
+
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      height: '28px',
+                      padding: '0 12px',
+                      borderRadius: '14px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#2563EB',
+                      backgroundColor: '#EFF6FF'
+                    }}
+                  >
+                    {fridgeData.temperature}
+                  </span>
+
+                  <span style={{ fontSize: '13px', color: '#6B7280' }}>
+                    Last active: {fridgeData.lastActive}
+                  </span>
+                </div>
+              </div>
+
+              <div aria-hidden="true" className="pointer-events-none flex items-center justify-center" style={{ flexShrink: 0 }}>
+                <img
+                  src={fridgeImageSrc}
+                  alt=""
+                  style={{
+                    width: '96px',
+                    height: '128px',
+                    display: 'block'
+                  }}
+                />
+              </div>
+            </div>
+
+              {/* Tabs */}
+              <div style={{ borderBottom: '1px solid #E5E7EB', marginBottom: '24px' }}>
+                <div className="flex gap-8">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className="relative transition-colors"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        height: '48px',
+                        fontSize: '14px',
+                        fontWeight: activeTab === tab ? 600 : 500,
+                        color: activeTab === tab ? '#2563EB' : '#6B7280',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {tab}
+                      {activeTab === tab && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '2px',
+                            backgroundColor: '#2563EB'
+                          }}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tab Content */}
+              {activeTab === 'Status' && (
+                <StatusTab fridgeData={fridgeData} temperatureTrend={temperatureTrend} isLoading={isLoading} />
+              )}
+              {activeTab === 'Inventory' && <InventoryTab fridgeId={fridgeId} isLoading={isLoading} />}
+              {activeTab === 'Sessions' && <SessionsTab fridgeId={fridgeId} isLoading={isLoading} />}
+              {activeTab === 'Alerts' && <AlertsTab fridgeId={fridgeId} isLoading={isLoading} />}
+            </div>
 
           {/* Footer */}
           <div className="text-center" style={{ marginTop: '32px' }}>
