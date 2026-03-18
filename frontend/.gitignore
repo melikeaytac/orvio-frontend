@@ -5,6 +5,7 @@ package-lock.json
 **/package-lock.json
 # Build
 dist/
+build/
 dist-ssr/
 *.local
 
