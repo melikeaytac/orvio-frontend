@@ -185,6 +185,7 @@ export interface ProductItem {
   product_id: string;
   name: string;
   brand_id: string;
+  ai_label?: string | null;
   unit_price: number | string;
   image_reference?: string | null;
   is_active?: boolean;
@@ -324,6 +325,7 @@ export async function getProducts(pagination?: PaginationParams): Promise<Pagina
 export async function createProduct(payload: {
   name: string;
   brand_id: string;
+  ai_label?: string;
   unit_price: number;
   image_reference?: string;
   is_active?: boolean;
@@ -337,6 +339,7 @@ export async function createProduct(payload: {
 export async function updateProduct(productId: string, payload: {
   name?: string;
   brand_id?: string;
+  ai_label?: string;
   unit_price?: number;
   image_reference?: string;
   is_active?: boolean;
