@@ -175,6 +175,31 @@ export interface DeviceAssignment {
   device?: { device_id: string; name?: string | null } | null;
 }
 
+export interface SysadminDevice {
+  device_id: string;
+  name: string;
+  location_description?: string | null;
+  gps_latitude?: number | string | null;
+  gps_longitude?: number | string | null;
+  default_temperature?: number | string | null;
+  status_id?: number | null;
+  assigned_admin_id?: string | null;
+  shelf_count?: number | null;
+  session_limit?: number | null;
+}
+
+export interface CreateSysadminDevicePayload {
+  name: string;
+  location_description: string;
+  gps_latitude?: number;
+  gps_longitude?: number;
+  default_temperature?: number;
+  assigned_admin_id?: string;
+  shelf_count?: number;
+  session_limit?: number;
+  status_id?: number;
+}
+
 export interface BrandItem {
   brand_id: string;
   brand_name: string;
@@ -310,6 +335,13 @@ export async function deleteSysadminAdmin(adminId: string): Promise<{ message: s
 export async function getSysadminDevices(pagination?: PaginationParams): Promise<PaginatedResponse<AdminDevice>> {
   const query = buildQuery({ page: pagination?.page, limit: pagination?.limit });
   return apiRequest<PaginatedResponse<AdminDevice>>(`/devices${query}`);
+}
+
+export async function createSysadminDevice(payload: CreateSysadminDevicePayload): Promise<SysadminDevice> {
+  return apiRequest<SysadminDevice>('/devices', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getBrands(pagination?: PaginationParams): Promise<PaginatedResponse<BrandItem>> {
