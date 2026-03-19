@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { Search, Plus } from 'lucide-react';
@@ -8,6 +8,7 @@ import { TableSkeleton } from './ui/table-skeleton';
 import { getAdminDevices } from '../api/client';
 import { formatRelativeTime } from '../utils/time';
 import { exportData } from '../utils/export';
+import AddFridgeModal from './AddFridgeModal';
 
 interface FridgeListProps {
   onLogout: () => void;
@@ -15,50 +16,45 @@ interface FridgeListProps {
   onViewFridge: (fridgeId: string) => void;
 }
 
+const normalizeStatus = (status?: string | null): 'online' | 'offline' => {
+  if (!status) return 'offline';
+  const normalized = status.toLowerCase();
+  return normalized.includes('online') || normalized.includes('active') ? 'online' : 'offline';
+};
+
 export default function FridgeList({ onLogout, onNavigate, onViewFridge }: FridgeListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [fridges, setFridges] = useState<FridgeData[]>([]);
+  const [showAddFridgeModal, setShowAddFridgeModal] = useState(false);
 
-  const normalizeStatus = (status?: string | null): 'online' | 'offline' => {
-    if (!status) return 'offline';
-    const normalized = status.toLowerCase();
-    return normalized.includes('online') || normalized.includes('active') ? 'online' : 'offline';
-  };
+  const loadFridges = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await getAdminDevices({ limit: 100 });
+      const devices = response.data;
+      const mapped = devices.map((device) => ({
+        id: device.device_id,
+        name: device.name || 'Unnamed fridge',
+        location: device.location_description || 'Unknown location',
+        status: normalizeStatus(device.status),
+        door: device.door_status ? 'open' : 'closed',
+        lastActive: formatRelativeTime(device.last_checkin_time || null),
+      }));
+      setFridges(mapped);
+    } catch (error) {
+      console.error('Failed to load devices', error);
+      setFridges([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const loadFridges = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getAdminDevices({ limit: 100 });
-        const devices = response.data;
-        const mapped = devices.map((device) => ({
-          id: device.device_id,
-          name: device.name || 'Unnamed fridge',
-          location: device.location_description || 'Unknown location',
-          status: normalizeStatus(device.status),
-          door: device.door_status ? 'open' : 'closed',
-          lastActive: formatRelativeTime(device.last_checkin_time || null),
-        }));
-        if (isMounted) {
-          setFridges(mapped);
-        }
-      } catch (error) {
-        console.error('Failed to load devices', error);
-        if (isMounted) setFridges([]);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    loadFridges();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    void loadFridges();
+  }, [loadFridges]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -193,7 +189,7 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
                   border: 'none',
                   cursor: 'pointer'
                 }}
-                onClick={() => alert('Add Fridge functionality')}
+                onClick={() => setShowAddFridgeModal(true)}
               >
                 <Plus size={18} />
                 Add Fridge
@@ -224,6 +220,12 @@ export default function FridgeList({ onLogout, onNavigate, onViewFridge }: Fridg
           </div>
         </main>
       </div>
+
+      <AddFridgeModal
+        isOpen={showAddFridgeModal}
+        onClose={() => setShowAddFridgeModal(false)}
+        onCreated={loadFridges}
+      />
     </div>
   );
 }
