@@ -7,8 +7,9 @@ import { EmptyState } from './ui/empty-state';
 import { ExportButton } from './ui/export-button';
 import { TableSkeleton, ChartSkeleton } from './ui/table-skeleton';
 import { getAdminDevices, getDeviceTransactions } from '../api/client';
-import { formatTime } from '../utils/time';
+import { formatDuration, formatTime } from '../utils/time';
 import { exportData } from '../utils/export';
+import { SessionDetailsDrawer, SessionDetail } from './SessionDetailsDrawer';
 
 interface TransactionsScreenProps {
   onLogout: () => void;
@@ -36,6 +37,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [fridges, setFridges] = useState<{ id: string; name: string }[]>([]);
   const [isFetching, setIsFetching] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
 
 
@@ -169,6 +171,58 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
       .sort((a, b) => a.hour.localeCompare(b.hour))
       .slice(0, 9);
   }, [analyticsSource]);
+
+  const sessionsById = useMemo(() => {
+    const grouped = new Map<string, {
+      sessionId: string;
+      startAt: string;
+      endAt: string;
+      actions: { type: 'take' | 'return'; product: string; quantity: number }[];
+    }>();
+
+    transactions.forEach((txn) => {
+      const existing = grouped.get(txn.sessionId);
+      const action = {
+        type: txn.action === 'Take' ? 'take' : 'return',
+        product: txn.product,
+        quantity: txn.quantity,
+      } as const;
+
+      if (!existing) {
+        grouped.set(txn.sessionId, {
+          sessionId: txn.sessionId,
+          startAt: txn.createdAt,
+          endAt: txn.createdAt,
+          actions: [action],
+        });
+        return;
+      }
+
+      if (new Date(txn.createdAt) < new Date(existing.startAt)) {
+        existing.startAt = txn.createdAt;
+      }
+      if (new Date(txn.createdAt) > new Date(existing.endAt)) {
+        existing.endAt = txn.createdAt;
+      }
+      existing.actions.push(action);
+    });
+
+    return grouped;
+  }, [transactions]);
+
+  const selectedSession: SessionDetail | null = useMemo(() => {
+    if (!selectedSessionId) return null;
+    const session = sessionsById.get(selectedSessionId);
+    if (!session) return null;
+
+    return {
+      id: session.sessionId,
+      startTime: formatTime(session.startAt),
+      endTime: formatTime(session.endAt),
+      duration: formatDuration(session.startAt, session.endAt),
+      actions: session.actions,
+    };
+  }, [selectedSessionId, sessionsById]);
 
   const handleTopProductsExport = async (format: 'csv' | 'png' | 'pdf') => {
     const data = topProductsData.map(item => ({
@@ -444,7 +498,7 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
                       </td>
                       <td style={{ padding: '18px 8px', textAlign: 'center' }}>
                         <button
-                          onClick={() => alert(`View session ${txn.sessionId}`)}
+                          onClick={() => setSelectedSessionId(txn.sessionId)}
                           className="transition-colors hover:underline"
                           style={{
                             background: 'none',
@@ -561,6 +615,12 @@ export default function TransactionsScreen({ onLogout, onNavigate }: Transaction
           </div>
         </main>
       </div>
+
+      <SessionDetailsDrawer
+        isOpen={selectedSessionId !== null}
+        session={selectedSession}
+        onClose={() => setSelectedSessionId(null)}
+      />
     </div>
   );
 }
