@@ -8,7 +8,7 @@ import AlertsScreen from './components/AlertsScreen';
 import TransactionsScreen from './components/TransactionsScreen';
 import AdminManagementScreen from './components/AdminManagementScreen';
 import ProductsScreen from './components/ProductsScreen';
-import { clearToken, getCurrentUserRole, getToken } from './api/client';
+import { clearToken, getCurrentUserRole, getToken, validateToken } from './api/client';
 
 // Hash → Page mapping
 const PAGE_MAPPING: Record<string, string> = {
@@ -23,32 +23,60 @@ const PAGE_MAPPING: Record<string, string> = {
 };
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
   const [showRegister, setShowRegister] = useState(false);
   const [currentPage, setCurrentPage] = useState('Dashboard');
   const [selectedFridgeId, setSelectedFridgeId] = useState<string | null>(null);
   const currentUserRole = getCurrentUserRole();
   const isSystemAdmin = currentUserRole === '1' || currentUserRole === 'SYSTEM_ADMIN';
 
-  // Initialize login state from localStorage on mount
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      setIsLoggedIn(true);
-      syncPageFromHash();
-    }
+    let isMounted = true;
+
+    const bootstrapAuth = async () => {
+      const token = getToken();
+
+      if (!token) {
+        if (isMounted) {
+          setAuthStatus('unauthenticated');
+        }
+        return;
+      }
+
+      try {
+        await validateToken();
+        if (!isMounted) return;
+
+        setAuthStatus('authenticated');
+        syncPageFromHash();
+      } catch {
+        clearToken();
+        if (!isMounted) return;
+
+        setShowRegister(false);
+        setCurrentPage('Dashboard');
+        setSelectedFridgeId(null);
+        window.location.hash = '';
+        setAuthStatus('unauthenticated');
+      }
+    };
+
+    bootstrapAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Listen to hash changes when logged in
   useEffect(() => {
     const handleHashChange = () => {
-      if (isLoggedIn) {
+      if (authStatus === 'authenticated') {
         syncPageFromHash();
       }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [isLoggedIn]);
+  }, [authStatus]);
 
   const syncPageFromHash = () => {
     const hash = window.location.hash.slice(1); // Remove #
@@ -84,7 +112,7 @@ export default function App() {
   };
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
+    setAuthStatus('authenticated');
     setShowRegister(false);
     window.location.hash = '#dashboard';
   };
@@ -95,7 +123,7 @@ export default function App() {
 
   const handleLogout = () => {
     clearToken();
-    setIsLoggedIn(false);
+    setAuthStatus('unauthenticated');
     setCurrentPage('Dashboard');
     setSelectedFridgeId(null);
     window.location.hash = '';
@@ -117,10 +145,13 @@ export default function App() {
   const handleViewFridge = (fridgeId: string) => {
     window.location.hash = `#fridge/${fridgeId}`;
   };
+if (authStatus === 'checking') {
+  return <div className="min-h-screen bg-white" />;
+}
 
   return (
     <>
-      {!isLoggedIn ? (
+      {authStatus !== 'authenticated' ? (
         showRegister ? (
           <RegisterScreen 
             onRegister={handleRegister} 

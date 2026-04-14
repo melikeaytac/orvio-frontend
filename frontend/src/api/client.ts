@@ -17,6 +17,14 @@ export interface LoginResponse {
   user?: { user_id: string; email: string; role?: string };
 }
 
+export interface AuthUser {
+  user_id: string;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  role?: string | number;
+}
+
 export interface RegisterResponse {
   user_id: string;
   email: string;
@@ -78,6 +86,10 @@ export async function register(payload: RegisterPayload): Promise<RegisterRespon
     throw new Error(data.message || data.error || 'Registration failed');
   }
   return data;
+}
+
+export async function validateToken(): Promise<AuthUser> {
+  return apiRequest<AuthUser>('/auth/me');
 }
 
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
