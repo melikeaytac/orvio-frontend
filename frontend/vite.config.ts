@@ -2,9 +2,20 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
+function normalizeBasePath(rawBase?: string) {
+  const value = String(rawBase || '').trim();
+  if (!value) {
+    return '/';
+  }
+
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+}
+
 export default defineConfig({
-  // 🔴 EN KRİTİK SATIR
-  base: '/orvio-ui/',
+  // Azure root deploy'larda blank screen olmaması için varsayılan root kullan.
+  // Eğer alt path'e deploy edilecekse VITE_PUBLIC_BASE_PATH ile override edilebilir.
+  base: normalizeBasePath(process.env.VITE_PUBLIC_BASE_PATH),
 
   plugins: [react()],
 

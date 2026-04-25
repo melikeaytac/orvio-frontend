@@ -13,5 +13,6 @@ Login and register use the **orvio-backend** API.
 
 - **Development:** Frontend proxies `/api` to `http://localhost:3000`. Start the backend in its repo:
   - `cd orvio-backend && npm i && npm run dev`
-- **Environment:** To use a different backend URL, set `VITE_API_URL` (e.g. in `.env`). Leave empty to use the proxy.
+- **Environment:** To use a different backend URL, set `VITE_BACKEND_URL` (e.g. in `.env`). Leave empty to use the proxy.
+- **Deploy base path (optional):** If you deploy under a sub-path (example: `/orvio-ui/`), set `VITE_PUBLIC_BASE_PATH=/orvio-ui/` before build.
 - **Endpoints:** `POST /auth/login`, `POST /auth/register`. Token is stored in `localStorage` and cleared on logout.
