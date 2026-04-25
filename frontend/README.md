@@ -16,3 +16,9 @@ Login and register use the **orvio-backend** API.
 - **Environment:** To use a different backend URL, set `VITE_BACKEND_URL` (e.g. in `.env`). Leave empty to use the proxy.
 - **Deploy base path (optional):** If you deploy under a sub-path (example: `/orvio-ui/`), set `VITE_PUBLIC_BASE_PATH=/orvio-ui/` before build.
 - **Endpoints:** `POST /auth/login`, `POST /auth/register`. Token is stored in `localStorage` and cleared on logout.
+
+### Azure deployment defaults
+- Admin frontend: `https://orvio-admin-dashboard.azurewebsites.net`
+- Backend API: `https://orvio-backend.azurewebsites.net`
+
+When `VITE_BACKEND_URL` is not provided and build mode is production, this app now defaults to `https://orvio-backend.azurewebsites.net`.

@@ -7,6 +7,7 @@ const getBaseUrl = (): string => {
   if (url && String(url).trim()) {
     return String(url).replace(/\/$/, '');
   }
+
   return '/api';
 };
 
